@@ -1238,6 +1238,61 @@ body {
   }
 }
 
+
+
+/* Google Sites desktop six-card override
+   Google Sites 內嵌 viewport 常比瀏覽器視窗窄，因此降低六欄切換門檻。 */
+@media (min-width: 900px) {
+  .subject-grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+    gap: 12px;
+  }
+
+  .subject-card {
+    min-height: 172px;
+    padding: 18px 10px 16px;
+  }
+
+  .subject-icon {
+    width: 58px;
+    height: 58px;
+    font-size: 2.2rem;
+  }
+
+  .subject-card h3 {
+    font-size: 1.12rem;
+  }
+
+  .subject-desc {
+    font-size: .84rem;
+    line-height: 1.5;
+  }
+
+  .subject-extra {
+    font-size: .79rem;
+  }
+
+  .dashboard {
+    grid-template-columns: 1.1fr 1.05fr .95fr !important;
+  }
+
+  .dashboard .panel-quick {
+    grid-column: auto !important;
+  }
+}
+
+@media (min-width: 700px) and (max-width: 899px) {
+  .subject-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 699px) {
+  .subject-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
 </style>
 </head>
 <body>
