@@ -135,5 +135,6 @@ $r = Invoke-WebRequest $admin -SkipHttpErrorCheck -TimeoutSec 25 -Headers @{ 'Us
 | 2026-09-19 | `cabdb74` | AI 助理（匿名請求實測） | GitHub 儲存庫 public、GitHub Pages 200、主題頁 200、嵌入頁 200、Google Sites 200 無權限牆、GAS 公開 API 200 JSON、GAS 後台匿名 404（符合預期） |
 | 2026-09-19 | 工作區（後台入口網址修正） | AI 助理（匿名請求實測） | 後台入口改為現行部署 `AKfycbz2…`：匿名 `200` 但只有登入畫面（無任何資料）；舊部署 `AKfycbxdJ4…` 匿名 `404`（已失效）；公開 API `200 application/json`（需瀏覽器 User-Agent，PowerShell 預設 UA 會被擋） |
 | 2026-09-20 | 工作區（後台連結＋後台時間同步） | AI 助理（匿名請求＋headless Chrome 實測） | 公開 API `200` 且含資料；`js/backend.js` 以 `serverTime`（舊版則用 `generatedAt`）校正時鐘；首頁／內頁／嵌入頁 headless Chrome 實測 `<html data-live-data="true" data-live-time="true">`、頁尾顯示「（後台時間）」；模擬離線時回退靜態備援且畫面正常 |
+| 2026-09-20 | `7a1fa82` | AI 助理 | 修正 `script.js`／`js/embed.js` 的 `todayMetaLabel()`：JSONP 逾時（無法連上後台）時不再退回 `data/site-data.js` 的開發假日期（例如 `2025 年 8 月 30 日（六）`），改為以 `DANA_SITE_CONFIG.timezoneOffsetMinutes`（Asia/Taipei，固定 480 分鐘）算出裝置時間的「今天」，字串格式與後台同步後的 `BACKEND.dateLabel()` 一致；無論後台是否連得上，「今日學習」面板日期一律顯示為當下 Asia/Taipei 的今天。 |
 
 
