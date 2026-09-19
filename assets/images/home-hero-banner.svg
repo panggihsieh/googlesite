@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2016" height="562" viewBox="0 0 2016 562" role="img" aria-labelledby="title desc">
+  <title id="title">學習 × 探究 ×</title>
+  <desc id="desc">大南國小高年級數位學習、AI 與探究實作首頁橫幅</desc>
+  <defs>
+    <linearGradient id="sky" x1="0" x2="1" y1="0" y2="0">
+      <stop offset="0" stop-color="#fbfdfe"/>
+      <stop offset="0.56" stop-color="#d9eef7"/>
+      <stop offset="1" stop-color="#a9def1"/>
+    </linearGradient>
+    <linearGradient id="grass" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#d9efcf"/>
+      <stop offset="1" stop-color="#4fa35e"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="2016" height="562" fill="url(#sky)"/>
+  <path d="M0 360C250 300 420 238 690 257c235 16 219 52 435-8 225-62 388-19 556-26 133-5 231-20 335-42v381H0z" fill="#eff7fa" opacity=".95"/>
+  <path d="M1000 267c201-89 326-44 515-41 198 3 337-7 501-57v393H1000z" fill="#7db8cf" opacity=".74"/>
+  <path d="M0 416c271-36 397 14 619-21 292-46 438-43 666-9 245 37 487-9 731-83v259H0z" fill="url(#grass)" opacity=".97"/>
+
+  <g fill="#fff" opacity=".72">
+    <circle cx="215" cy="130" r="78"/><circle cx="286" cy="143" r="86"/><circle cx="153" cy="150" r="58"/>
+    <circle cx="624" cy="104" r="67"/><circle cx="672" cy="127" r="67"/><circle cx="574" cy="127" r="49"/>
+  </g>
+
+  <g opacity=".36" fill="#dce8de">
+    <circle cx="79" cy="466" r="77"/><circle cx="167" cy="475" r="70"/><circle cx="268" cy="461" r="79"/>
+    <circle cx="382" cy="463" r="68"/><circle cx="489" cy="446" r="79"/>
+  </g>
+
+  <g transform="translate(1034 270)">
+    <rect x="0" y="0" width="709" height="184" rx="3" fill="#ffe8c5"/>
+    <rect x="0" y="0" width="709" height="22" fill="#fff8ed"/>
+    <rect x="22" y="26" width="665" height="36" fill="#dd8c78"/>
+    <g fill="#edf6f8" stroke="#fff8ed" stroke-width="7">
+      <rect x="32" y="75" width="67" height="67"/><rect x="117" y="75" width="67" height="67"/>
+      <rect x="202" y="75" width="67" height="67"/><rect x="287" y="75" width="67" height="67"/>
+      <rect x="372" y="75" width="67" height="67"/><rect x="457" y="75" width="67" height="67"/>
+      <rect x="542" y="75" width="67" height="67"/><rect x="627" y="75" width="58" height="67"/>
+    </g>
+    <g fill="#8dc4d8">
+      <rect x="38" y="81" width="55" height="55"/><rect x="123" y="81" width="55" height="55"/>
+      <rect x="208" y="81" width="55" height="55"/><rect x="293" y="81" width="55" height="55"/>
+      <rect x="378" y="81" width="55" height="55"/><rect x="463" y="81" width="55" height="55"/>
+      <rect x="548" y="81" width="55" height="55"/><rect x="633" y="81" width="46" height="55"/>
+    </g>
+    <rect x="0" y="184" width="709" height="16" fill="#4f9b69" opacity=".55"/>
+  </g>
+
+  <g>
+    <rect x="1464" y="148" width="14" height="175" fill="#a77b51"/>
+    <circle cx="1470" cy="108" r="58" fill="#68b35e"/>
+    <circle cx="1425" cy="149" r="44" fill="#72bc68"/>
+    <circle cx="1512" cy="156" r="46" fill="#77bf6d"/>
+
+    <rect x="1702" y="113" width="15" height="216" fill="#a77b51"/>
+    <circle cx="1709" cy="69" r="75" fill="#66b15f"/>
+    <circle cx="1658" cy="131" r="52" fill="#6fba66"/>
+    <circle cx="1754" cy="129" r="57" fill="#76bd6d"/>
+  </g>
+
+  <g transform="translate(1590 338)">
+    <path d="M0 57C25 17 68 3 107 0l225 8c41 2 67 17 83 52l-10 82H14z" fill="#efe6d7" stroke="#c8bca9" stroke-width="5"/>
+    <text x="207" y="84" text-anchor="middle" font-family="'Noto Sans TC','Microsoft JhengHei','PingFang TC',sans-serif" font-size="52" font-weight="800" fill="#292929">大南國小</text>
+    <text x="207" y="122" text-anchor="middle" font-family="Arial,sans-serif" font-size="25" fill="#2d2d2d">Da-Nan Elementary School</text>
+  </g>
+
+  <g font-family="'Noto Sans TC','Microsoft JhengHei','PingFang TC',sans-serif" fill="#123f78">
+    <text x="26" y="192" font-size="94" font-weight="900" letter-spacing="1">學習 × 探究 ×</text>
+    <text x="25" y="282" font-size="38" font-weight="800">大南國小高年級數位學習 × AI × 探究實作</text>
+    <text x="25" y="357" font-size="28" font-weight="800">閱讀世界　探索自然　擁抱科技　創造未來</text>
+  </g>
+</svg>
