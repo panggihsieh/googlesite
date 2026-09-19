@@ -415,3 +415,45 @@ a:focus-visible {
     transition-duration: .01ms !important;
   }
 }
+
+
+/* Admin entry */
+.hero {
+  position: relative;
+}
+
+.admin-entry {
+  position: absolute;
+  top: 14px;
+  right: 18px;
+  z-index: 5;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid rgba(18, 63, 124, .14);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, .88);
+  color: #123f7c;
+  font-size: 1.15rem;
+  box-shadow: 0 6px 18px rgba(31, 69, 100, .12);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: transform .15s ease, box-shadow .15s ease, background .15s ease;
+}
+
+.admin-entry:hover {
+  transform: translateY(-2px);
+  background: #fff;
+  box-shadow: 0 10px 24px rgba(31, 69, 100, .18);
+}
+
+@media (max-width: 699px) {
+  .admin-entry {
+    top: 10px;
+    right: 12px;
+    width: 40px;
+    height: 40px;
+    font-size: 1.05rem;
+  }
+}
