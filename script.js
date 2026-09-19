@@ -66,43 +66,84 @@
     var host = el("site-header");
     if (!host) return;
 
+    var navIcons = {
+      "首頁": "🏠",
+      "國語": "📖",
+      "數學": "🧮",
+      "環境教育": "🌿",
+      "AI 科技": "🤖",
+      "AI科技": "🤖",
+      "學習任務": "📋",
+      "學生作品": "⭐",
+      "教師專區": "👥",
+      "關於大南": "ⓘ"
+    };
+
     var items = (DATA.nav || [])
       .map(function (item) {
         var active = item.match === PAGE;
+        var icon = navIcons[item.label] || "•";
         return (
           '<li><a href="' +
           esc(navLink(item.href)) +
           '"' +
           (active ? ' class="is-active" aria-current="page"' : "") +
           ">" +
+          '<span class="nav-icon" aria-hidden="true">' +
+          esc(icon) +
+          "</span>" +
+          '<span class="nav-label">' +
           esc(item.label) +
-          "</a></li>"
+          "</span></a></li>"
         );
       })
       .join("");
 
+    var leafLogo =
+      '<svg class="brand-leaf" viewBox="0 0 52 66" aria-hidden="true" focusable="false">' +
+      '<path d="M29 2C15 9 6 24 7 39c1 12 8 21 18 25 7-9 11-20 10-32C34 21 32 11 29 2Z" fill="#73c33e"/>' +
+      '<path d="M29 3c10 10 17 23 16 35-1 11-7 20-18 26 2-13 2-27 2-41V3Z" fill="#58ad2f"/>' +
+      '<path d="M28 11c0 16-1 32-4 48" stroke="#ffffff" stroke-width="2" stroke-linecap="round" opacity=".95"/>' +
+      '<path d="M27 25 16 35M27 38l10-10M26 48l-8 7" stroke="#ffffff" stroke-width="1.4" stroke-linecap="round" opacity=".8"/>' +
+      "</svg>";
+
     host.innerHTML =
       '<header class="site-header">' +
-      '<div class="container header-inner">' +
+      '<div class="header-inner">' +
       '<a class="brand" href="' +
       esc(link("index.html")) +
       '">' +
-      '<span class="brand-mark" aria-hidden="true">🌳</span>' +
+      '<span class="brand-mark">' +
+      leafLogo +
+      "</span>" +
       '<span class="brand-text">' +
       "<strong>" +
       esc(SITE.name || "") +
       "</strong>" +
       "<small>" +
-      esc(SITE.schoolEn || "") +
+      esc(SITE.tagline || "學習 × 探究 × 創造更好的自己") +
       "</small>" +
       "</span>" +
       "</a>" +
-      '<button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav" aria-label="開啟導覽選單">' +
-      "<span></span><span></span><span></span>" +
-      "</button>" +
       '<nav class="site-nav" id="site-nav" aria-label="主選單"><ul>' +
       items +
       "</ul></nav>" +
+      '<div class="header-actions">' +
+      '<button class="header-search-toggle" type="button" aria-expanded="false" aria-controls="header-search-panel" aria-label="搜尋網站">' +
+      '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.4"></circle><path d="m16 16 4 4"></path></svg>' +
+      "</button>" +
+      '<button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav" aria-label="開啟導覽選單">' +
+      "<span></span><span></span><span></span>" +
+      "</button>" +
+      "</div>" +
+      '<div class="header-search-panel" id="header-search-panel" hidden>' +
+      '<form class="header-search-form" role="search">' +
+      '<label class="sr-only" for="header-search-input">搜尋網站</label>' +
+      '<input id="header-search-input" type="search" placeholder="搜尋國語、數學、AI…" autocomplete="off">' +
+      '<button type="submit">搜尋</button>' +
+      "</form>" +
+      '<p class="header-search-status" aria-live="polite"></p>' +
+      "</div>" +
       "</div>" +
       "</header>";
   }
@@ -192,6 +233,69 @@
       nav.classList.remove("is-open");
       toggle.setAttribute("aria-expanded", "false");
       toggle.setAttribute("aria-label", "開啟導覽選單");
+    });
+  }
+
+  function setupHeaderSearch() {
+    var toggle = document.querySelector(".header-search-toggle");
+    var panel = el("header-search-panel");
+    var input = el("header-search-input");
+    var status = document.querySelector(".header-search-status");
+    var form = document.querySelector(".header-search-form");
+    if (!toggle || !panel || !input || !form) return;
+
+    function closeSearch() {
+      panel.hidden = true;
+      toggle.setAttribute("aria-expanded", "false");
+    }
+
+    toggle.addEventListener("click", function () {
+      var willOpen = panel.hidden;
+      panel.hidden = !willOpen;
+      toggle.setAttribute("aria-expanded", String(willOpen));
+      if (willOpen) {
+        window.setTimeout(function () {
+          input.focus();
+        }, 0);
+      }
+    });
+
+    form.addEventListener("submit", function (event) {
+      event.preventDefault();
+      var query = input.value.trim();
+      if (!query) return;
+
+      var navMatch = (DATA.nav || []).find(function (item) {
+        return String(item.label || "").toLowerCase().indexOf(query.toLowerCase()) !== -1;
+      });
+      if (navMatch) {
+        window.location.href = navLink(navMatch.href);
+        return;
+      }
+
+      var subjectMatch = (DATA.subjects || []).find(function (item) {
+        var haystack = [item.title, item.desc, item.extra].join(" ").toLowerCase();
+        return haystack.indexOf(query.toLowerCase()) !== -1;
+      });
+      if (subjectMatch) {
+        window.location.href = link(subjectMatch.href);
+        return;
+      }
+
+      var found = typeof window.find === "function" ? window.find(query) : false;
+      if (status) {
+        status.textContent = found ? "已找到本頁相關文字。" : "本頁找不到「" + query + "」。";
+      }
+    });
+
+    document.addEventListener("keydown", function (event) {
+      if (event.key === "Escape") closeSearch();
+    });
+
+    document.addEventListener("click", function (event) {
+      if (panel.hidden) return;
+      if (panel.contains(event.target) || toggle.contains(event.target)) return;
+      closeSearch();
     });
   }
 
@@ -550,6 +654,7 @@
     renderHeader();
     renderFooter();
     setupNavToggle();
+    setupHeaderSearch();
 
     renderSubjects();
     renderToday();
