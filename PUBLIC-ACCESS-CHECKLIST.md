@@ -2,8 +2,8 @@
 
 本文件記錄「哪些內容應該公開、公開的開關在哪裡、如何用匿名請求驗證」。
 
-最後檢查日期：`2026-09-19`
-對應版本：分支 `main`、commit `cabdb74`（Align homepage shell with new visual navigation）
+最後檢查日期：`2026-09-20`
+對應版本：分支 `main`、commit `cabdb74`（Align homepage shell with new visual navigation）＋工作區變更（後台連結與後台時間同步）
 
 ## 1. 原則
 
@@ -53,6 +53,9 @@
 - 網址設定檔：`data/site-config.js` 的 `publicApiUrl`（逾時 `apiTimeoutMs`）
 - 只提供 `?api=public` 與 `?api=public&callback=...`（JSONP，避開跨網域 CORS）
 - 與後台入口是**同一個部署**，只差 `?api=public`
+- 回應除了資料外還包含後台時間：`serverTime`（`timestamp／iso／date／dateLabel／timeLabel`，Asia/Taipei）與相容用的 `generatedAt`；`serverTime` 每次請求即時產生，不受 60 秒資料快取影響
+- 回應欄位：`today`（今日學習）、`news`（最新消息）、`quickLinks`（快速連結）、`siteLinks`（後台連結管理：導覽列與頁尾連結）、`settings`（後台設定：網站基本資料，只輸出有填寫的欄位），資料類欄位都只輸出 `visible=true` 的內容
+- 前台（`js/backend.js`）用 `serverTime.timestamp` 校正時鐘，頁面上的日期一律以後台時間顯示
 
 ### GAS 後台管理
 
@@ -121,6 +124,7 @@ $r = Invoke-WebRequest $admin -SkipHttpErrorCheck -TimeoutSec 25 -Headers @{ 'Us
 | Pages 內容是舊版 | 部署還沒跑完或失敗 | Actions 部署紀錄；push 到 `main` 後等 1 分鐘重新整理 |
 | 頁面停在登入畫面 | 儲存庫被改成 Private，或 Pages 被關閉 | 儲存庫可見性、`pages.public` |
 | 首頁有畫面但課表／消息是舊資料 | GAS 公開 API 被拒或逾時，前端已回退靜態備援 | 執行上方步驟 3；必要時重新部署公開 API（存取權：任何人） |
+| 頁面日期不是今天（例如停在舊年份） | 前台連不到後台，日期回退成靜態備援資料的日期 | 執行上方步驟 3；正常時頁尾會顯示「最後更新：…（後台時間）」，且 `<html>` 有 `data-live-time="true"` |
 | 未登入就能看到後台「資料」 | 白名單檢查失效或部署版本過舊 | 匿名開後台網址應只有登入畫面；檢查 `gas/Code.gs` 白名單與目前部署版本 |
 | Google Sites 要求存取權 | 共用設定被改成「限制」 | Google Sites → `共用` → 改為「知道連結的任何人都可以查看」 |
 
@@ -130,5 +134,6 @@ $r = Invoke-WebRequest $admin -SkipHttpErrorCheck -TimeoutSec 25 -Headers @{ 'Us
 | --- | --- | --- | --- |
 | 2026-09-19 | `cabdb74` | AI 助理（匿名請求實測） | GitHub 儲存庫 public、GitHub Pages 200、主題頁 200、嵌入頁 200、Google Sites 200 無權限牆、GAS 公開 API 200 JSON、GAS 後台匿名 404（符合預期） |
 | 2026-09-19 | 工作區（後台入口網址修正） | AI 助理（匿名請求實測） | 後台入口改為現行部署 `AKfycbz2…`：匿名 `200` 但只有登入畫面（無任何資料）；舊部署 `AKfycbxdJ4…` 匿名 `404`（已失效）；公開 API `200 application/json`（需瀏覽器 User-Agent，PowerShell 預設 UA 會被擋） |
+| 2026-09-20 | 工作區（後台連結＋後台時間同步） | AI 助理（匿名請求＋headless Chrome 實測） | 公開 API `200` 且含資料；`js/backend.js` 以 `serverTime`（舊版則用 `generatedAt`）校正時鐘；首頁／內頁／嵌入頁 headless Chrome 實測 `<html data-live-data="true" data-live-time="true">`、頁尾顯示「（後台時間）」；模擬離線時回退靜態備援且畫面正常 |
 
 

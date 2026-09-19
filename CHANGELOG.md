@@ -1,5 +1,109 @@
 # CHANGELOG — 大南老邦教學網
 
+## 2026-09-20 — 後台設定（輸入欄位）：網站基本資料改由後台管理並同步前台
+
+> 需求（選項 4）：後台以「設定輸入欄位」管理網站基本資料（原本只存在 `data/site-config.js`／`data/site-data.js`，後台改不到）
+
+- 新增 Google Sheet 工作表 `settings`（`key`／`value`／`updated_at`，key‑value 兩欄式）：
+  - `gas/Code.gs` 新增 `CONFIG.SHEETS.SETTINGS`、`SHEET_HEADERS.settings`、`SETTINGS_FIELDS`（欄位定義的唯一來源）與 `getSettings()`／`saveSettings()`；`getBootstrapData()` 帶回 `settings` 與 `settingsFields`，公開 API 新增 `settings` 欄位（只輸出有填寫的欄位）。
+  - 存檔只接受 `SETTINGS_FIELDS` 的 key、值會 trim 並限制 600 字；既有列就地更新、缺少的 key 自動補列，Sheet 上手動新增的其他 key 不會被清掉。
+  - 儲存後清除公開資料快取；`PUBLIC_SCHEMA_VERSION` 2 → 3（回應多了 `settings`，順便讓舊快取立即失效）。
+- 後台畫面（`gas/Index.html`）：
+  - 側邊選單新增 `⚙️ 後台設定`；儀表板新增第 5 張統計卡（已設定欄位數）與第 5 張快速操作卡（`⚙️ 編輯後台設定`）。
+  - 設定頁是**輸入欄位表單**（不是 CRUD 表格）：欄位依 `group` 分組（網站基本資料／首頁橫幅（Hero）），單行 `input`、多行 `textarea`，附 placeholder 與說明，右上角「儲存設定」／「還原變更」。
+  - 欄位定義來自 `getBootstrapData()` 的 `settingsFields`，之後要新增或調整設定欄位，只要改 `gas/Code.gs` 的 `SETTINGS_FIELDS`，後台表單會自動跟著長出來。
+  - CSS 補上 `.field textarea`、`.settings-group`、`.teal`（第 5 張統計卡色）。
+- 前台（`script.js`、`js/embed.js`）：
+  - 新增 `applySiteSettings(settings)`：只覆寫有填寫的欄位（`site_name`→`site.name`、`school`、`school_en`、`grade`、`tagline`、`description`、`hero_title`、`hero_lead`、`keywords`（以「、」或逗號分隔→陣列）），空白欄位一律沿用靜態檔。
+  - `script.js` 套用後重繪頁首／頁尾，並用 `applySiteTitle()` 把 `<title>`／`og:title`／`og:description` 裡的舊名稱與標語換成後台設定（找不到就維持原樣）；`js/embed.js` 套用後重繪 Hero（`#hero-title`／`#hero-lead`／`#hero-keywords`）。
+  - 首頁橫幅是設計圖（文字已畫在圖上），所以 Hero 文案的後台設定套用在 Google Sites 嵌入版；後台設定頁有提示文字說明。
+- 文件：`PROJECT.md`（結構、對照表、§11）、`README.md`（對照表）、`admin/README.md`（功能、工作表、後台畫面、公開 API 範例）、`PUBLIC-ACCESS-CHECKLIST.md`（公開 API 欄位）、`data/site-config.js`／`data/site-data.js`（註解說明後台設定可覆寫）。
+- 驗證：
+  - `node --check`：`script.js`、`js/embed.js`、`js/backend.js`、`data/site-data.js`、`data/site-config.js`、`gas/Code.gs`、`gas/Index.html` 內嵌腳本全部通過。
+  - 後台（假 `google.script.run`，`settings` 4 項有值）：統計卡 5 張（`2／1／1／1／4`）、快速操作卡 5 張、側邊選單 7 項；「後台設定」頁兩個分組、9 個欄位（label／name 對應正確、`description` 與 `hero_lead` 為 textarea）、4 個欄位帶入既有值、其餘顯示 placeholder；改 `tagline` 送出後表單重新渲染為新值（儲存往返成功）。
+  - 前台（本機 headless Chrome 注入 `settings`）：`<title>`＝`大南老邦學習網 ｜ 大南國小高年級數位學習`、`og:title`／`og:description` 同步更新；頁首品牌＝`大南老邦學習網`＋新標語、頁尾＝`大南國民小學・高年級科技學習｜後台設定測試簡介`、頁尾版權列同步；`data-live-data`／`data-live-time` 皆為 `true`。
+  - 嵌入版：`#hero-title`＝`後台設定的橫幅標題`、`#hero-lead`＝`後台設定的橫幅副標`、`#hero-keywords`＝三顆標籤（由 `閱讀世界、探索自然、擁抱科技` 切出）、`<title>` 同步更新。
+
+## 2026-09-20 — 新增後台模組「後台連結管理」（導覽列／頁尾連結）
+
+> 需求：在側邊選單新增一個資料模組「後台連結管理」，管理頁尾／導覽列的連結（原本只存在 `data/site-data.js`，後台改不到）
+
+- 新增 Google Sheet 工作表 `site_links`（欄位 `id, area, group, label, icon, href, visible, sort_order, updated_at`）：
+  - `gas/Code.gs` 的 `SHEETS.SITE_LINKS`、`SHEET_HEADERS`、`getEntityDef_`、`normalizeRecord_`、`getBootstrapData`、公開 API 同步支援；公開 API 新增 `siteLinks` 欄位（只回傳 `visible=true`），儲存／刪除／切換顯示都會清除公開資料快取。
+  - `area=nav` → 前台導覽列；`area=footer` → 前台頁尾連結（用 `group` 可分多欄）。
+  - `getSheet_()` 改為**缺少工作表時自動建立**（依 `CONFIG.SHEET_HEADERS` 寫入標題列），避免少一個分頁就讓後台整頁讀不到資料，也讓新模組免手動建分頁。
+- 後台畫面（`gas/Index.html`，沿用 `admin.png` 的版面與樣式）：
+  - 側邊選單新增 `🔖 後台連結管理`；儀表板新增第 4 張統計卡（導覽列／頁尾連結筆數）與第 4 張快速操作卡（`＋ 新增後台連結`）。
+  - 管理頁表格欄位：`位置（導覽列／頁尾）｜分組｜名稱｜圖示｜連結｜排序｜顯示｜操作`；表單可設定位置、分組、名稱、圖示、排序、顯示與連結。
+  - 統計卡與快速操作卡改用 `repeat(auto-fit, minmax(...))`，3 個或 4 個模組都維持同一種卡片外觀；< 960px 時表單改單欄。
+- 前台（`script.js`／`style.css`）：
+  - `applyLiveData()` 收到 `siteLinks` 後呼叫 `applySiteLinks()`：
+    - `area=nav`：與 `data/site-data.js` 的內建選單**合併**（同名覆寫、新的名稱附加在後）後重繪導覽列；後台沒有 nav 資料時完全維持內建選單。
+    - `area=footer`：渲染成頁尾的後台連結欄（依 `group` 分組，預設「相關連結」），外部連結自動加 `target="_blank" rel="noopener"`。
+  - 頁尾只有在有後台連結時才加上 `.footer-grid.has-extra`（4 欄）；沒有後台連結時維持原本 3 欄外觀（`style.css` 同步補上 1180px／680px 響應式規則）。
+  - `renderHeader()` 會重新綁定選單與搜尋，因此把搜尋面板的文件層級監聽（Esc 關閉、點擊外部關閉）拆到 `setupHeaderSearchGlobal()`，只在 `init()` 綁定一次，避免重複綁定累積。
+  - 導覽列圖示可用後台設定的 emoji（`siteLinks[].icon`），未設定時沿用內建對照表。
+- 文件：`PROJECT.md`（結構加入 `gas/`、對照表、§11 補上本模組）、`README.md`（結構與對照表）、`admin/README.md`（功能、工作表、後台畫面說明）、`PUBLIC-ACCESS-CHECKLIST.md`（公開 API 欄位）。
+- 驗證：
+  - `node --check`：`script.js`、`data/site-data.js`、`gas/Code.gs`、`gas/Index.html` 內嵌腳本全部通過。
+  - 前台（本機 headless Chrome，注入模擬 `siteLinks`）：`<html data-live-data="true" data-live-time="true">`；導覽列 10 項＝內建 9 項 ＋ 後台新增的 `英語`（`數學` 被後台同項覆寫、沒有重複）；頁尾出現 `footer-grid has-extra`，多出 `相關連結`（大南國小、因材網）與 `學習資源`（教育雲）兩欄。
+  - 後台（假 `google.script.run`，`site_links` 3 筆）：統計卡 4 張（`4／5／8／3`）、快速操作卡 4 張、側邊選單 6 項；切到 `後台連結管理` 後表頭與三列資料正確（`導覽列／—／英語／🔤／pages/env.html`、`頁尾／相關連結／大南國小`、`頁尾／學習資源／教育雲`），`visible=false` 的那列開關未勾選（頁面 20 個開關中 18 個已勾選）；新增表單位置預設 `導覽列`、分組預設 `相關連結`、顯示預設 `是`。
+
+## 2026-09-20 — 後台管理畫面依設計圖重建（admin.png）
+
+> 需求：後台管理畫面遵守設計圖 `admin.png` 的內容與風格，若後續新增模組也要類似
+
+- 依 `admin.png`（1536×1024，含登入頁／側邊選單／儀表板／三個管理頁）重建 `gas/Index.html`，並在檔案頂端加上「新增模組請沿用同一套版面、色票與樣式」的註解。
+- 登入畫面改為設計圖的內容：`大南老邦教學網`／`Da-Nan Elementary School`／`🌿 後台管理系統`／`登入後即可管理今日學習、最新消息、快速連結等內容`／`管理者登入`／`Google 帳號`（顯示目前帳號）／`登入狀態`（未授權顯示紅色標記）／`使用 Google 帳號登入／重新檢查`／`網站預覽`／`使用說明`（可展開）。
+- 側邊選單：品牌 `🌿 大南老邦教學網／後台管理系統` ＋ `首頁儀表板／今日學習／最新消息／快速連結`；下方新增「系統」區：`使用說明`、`網站預覽（前台首頁）`、`Google Sites 網站`。
+- 儀表板：`歡迎回來！` 歡迎卡（說明修改後會同步到前台）＋ 三張統計卡（今日學習／最新消息／快速連結，各附 `前往管理 →`）＋ `快速操作` 三張說明卡（新增今日學習／最新消息／快速連結）。
+- 管理頁：標題改為 `今日學習管理／最新消息管理／快速連結管理`，並在標題旁補上用途說明；表格維持 `顯示` 開關與 `✏️ 編輯／🗑️ 刪除`、`＋ 新增`；沒有資料時顯示「目前沒有資料」提示列。
+- 後台時間：右上角顯示 `後台時間：2026-09-20 07:20:00（Asia/Taipei）`、後台日期 `2026 年 9 月 20 日（日）` 與 `今天也一起努力！`；新增表單的日期預設值仍取自後台時間。
+- 響應式：< 960px 時側邊選單改為上方區塊、統計卡與快速操作改單欄；列印時隱藏側邊選單與操作按鈕。
+- 驗證：
+  - `node --check`（抽出內嵌 `<script>` 後檢查）通過。
+  - 以假的 `google.script.run`（假資料 4／5／8 筆，與設計圖數字一致）在本機 headless Chrome（`--dump-dom --virtual-time-budget=2500`）渲染五種狀態：
+    - 儀表板：統計卡 `4／5／8`、`後台時間：2026-09-20 07:20:00（Asia/Taipei）`、日期 `2026 年 9 月 20 日（日）`、`快速操作` 3 張卡、側邊選單 5 項。
+    - 今日學習管理：表頭 `節次｜領域｜課程名稱｜日期｜顯示｜操作`，4 列課程；`visible=false` 的那一列開關未勾選，其餘 16 個開關已勾選。
+    - 新增最新消息：表單標題 `新增 最新消息`，日期預設值 `09/20`（後台時間）。
+    - 使用說明：切換後顯示說明面板（登入白名單、三個模組、同步方式、後台時間）。
+    - 非白名單帳號：顯示登入畫面，`Google 帳號：guest@gmail.com`、`登入狀態：未授權`、提示改用白名單帳號。
+
+## 2026-09-20 — 全站與後台連結 ＋ 時間改用後台時間同步
+
+> 需求：① 必須與後台連結（`AKfycbz2…/exec`）② 時間必須使用後台時間做同步 ③ 首頁原本沒有後台連線、日期是寫死的
+
+- 新增 `js/backend.js`：前台共用的「後台連線 ＋ 後台時間同步」模組。
+  - 以 JSONP 讀取 GAS 公開資料 API（`DANA_SITE_CONFIG.publicApiUrl` 加上 `?api=public&callback=…`），逾時沿用 `apiTimeoutMs`（8 秒），失敗只印警告不影響畫面。
+  - 以後台回傳的 `serverTime.timestamp` 計算前端時鐘偏移（以請求送出／回應的中間點扣掉網路往返），提供 `todayIso()／dateLabel()／timeLabel()／year()／generatedAt()／onSync()／load()`。
+  - 日期換算使用後台時區固定偏移（`timezoneOffsetMinutes: 480`；Asia/Taipei 沒有日光節約時間），**不依賴使用者電腦的時區或時間設定**。
+  - 相容舊版 GAS：沒有 `serverTime` 時退回用 `generatedAt` 字串換算，因此 GAS 還沒重新部署也能生效。
+- 首頁與內頁改為與後台連結：`index.html`、`pages/*.html`（6 頁）都載入 `data/site-config.js` 與 `js/backend.js`；`script.js` 新增 `connectBackend()`／`applyLiveData()`，先顯示 GitHub 靜態資料，連上後台後用 Google Sheet 最新資料覆寫「今日學習／最新消息／快速連結」，並在 `<html>` 標記 `data-live-data="true"`。
+  - 覆寫時保留只有靜態檔才有的欄位：課程「開始今天的學習」CTA（`today.cta`）與快速連結副標（`quickLinks[].note`，以名稱比對後合併）。
+  - 連不到後台（離線、API 逾時或被拒）時維持 GitHub 靜態備援資料，`data-live-*` 不會出現，畫面不中斷。
+- 時間一律以後台為準：
+  - 首頁與嵌入版的「今日學習」面板日期改由 `DANA_BACKEND.dateLabel()` 產生（例：`2026 年 9 月 20 日（日）`），連不到後台才退回資料檔的 `dateLabel`。
+  - 頁尾年份改用後台時間的年；連上後台後「最後更新」顯示後台資料時間並標記來源：`最後更新：2026-09-20 06:59:25（後台時間）`（`#footer-updated[data-source="backend"]`）。
+- `js/embed.js`：JSONP 載入與時間同步改為呼叫共用模組（移除重複的載入程式），`#today-meta` 同樣以後台時間為準。
+- `gas/Code.gs`：
+  - `PUBLIC_SCHEMA_VERSION` 1 → 2。
+  - 新增 `getServerTime_()` 與公開函式 `getServerTime()`，回傳 `{ timezone, timestamp, iso, date, dateLabel, timeLabel, weekday }`（Asia/Taipei）。
+  - 公開 API 每次回應都即時加上 `serverTime`（並保留 `generatedAt` 給舊前端）；60 秒快取只快取資料、不再快取時間，避免前台拿過期時間當校正基準。
+- `gas/Index.html`（後台管理）：
+  - 標題列顯示「後台時間：2026-09-20 06:59:25（Asia/Taipei）」。
+  - 新增資料的日期預設值改用後台時間（`todayIso()`／`todayMd()` 讀 `getServerTime()`），避免老師電腦時間設錯時寫入錯誤日期；取得失敗時才暫用電腦時間並在畫面註明。
+- `data/site-config.js`：新增 `timezone: "Asia/Taipei"`、`timezoneOffsetMinutes: 480`，並補註解說明前台兩種用途（資料覆寫、時間校正）都走同一個部署。
+- `data/site-data.js`：檔案定位改為「靜態備援資料」（原註解寫「MVP 第一版不使用後端」）；頁尾說明由「不須登入、沒有後端」改為「內容由後台（Google Sheet + Apps Script）同步，瀏覽不需要登入」。
+- 驗證：
+  - `node --check`：`script.js`、`js/backend.js`、`js/embed.js`、`data/*.js`、`gas/Code.gs`、`gas/Index.html` 內嵌腳本全部通過。
+  - `js/backend.js` 邏輯測試（Node 臨時測試腳本，23 項全數 PASS）：JSONP URL 組裝、回呼與 script 清理、`onSync` 通知、`serverTime` 與舊版 `generatedAt` 兩種來源的日期／時間換算、時鐘偏移量、逾時錯誤回報。
+  - `python -m http.server 8123` ＋ headless Chrome（`--dump-dom --virtual-time-budget=9000`）：
+    - `index.html` → `<html lang="zh-Hant" data-live-time="true" data-live-data="true">`；面板日期 `2026 年 9 月 20 日（日）`（靜態檔為 `2025 年 8 月 30 日（六）`）；頁尾 `© 2026` 與 `最後更新：2026-09-20 06:59:25（後台時間）`；消息 4 筆（後台）＋ 3 個快速連結副標（合併保留）。
+    - `google-sites-embed.html` → `#today-meta` = `2026 年 9 月 20 日（日）`。
+    - `pages/chinese.html` → 頁尾 `（後台時間）`、4 張學習重點卡片正常。
+    - 模擬離線（`--host-resolver-rules="MAP script.google.com 127.0.0.1"`）→ 無 `data-live-*`、面板日期與頁尾回到靜態備援（`2025 年 8 月 30 日（六）`、`data-source="static"`）、5 筆靜態消息，畫面不中斷。
+  - 註：目前線上 GAS 仍是舊版（回應沒有 `serverTime`），上述驗證走的是 `generatedAt` 相容路徑；把新的 `gas/Code.gs` 貼回專案並重新部署後即改用 `serverTime.timestamp`。
+
 ## 2026-09-19 — 首頁版面依設計圖全面對齊（配色、卡片、面板、快速連結方框）
 
 - 設計依據：`layout.png`（1672×941）。比對方式：把設計圖與 headless Chrome 截圖都跑同一組量測程式（色彩連通元件方框、掃描線顏色變化點、逐區塊 OCR），逐項比對座標後修正。修正後主要區塊與設計圖的誤差都在 4px 以內。

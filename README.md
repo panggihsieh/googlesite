@@ -11,6 +11,9 @@
 
 ## 目前架構
 
+首頁與內頁會先顯示 GitHub 上的靜態資料，再由 `js/backend.js` 與後台（GAS 公開資料 API）連線：
+資料以 Google Sheet 最新內容覆寫，日期與時間則以後台時間校正（連不到後台時維持靜態備援）。
+
 ```text
 googlesite/
 ├─ index.html
@@ -20,6 +23,7 @@ googlesite/
 ├─ css/
 │  └─ embed.css
 ├─ js/
+│  ├─ backend.js
 │  └─ embed.js
 ├─ data/
 │  ├─ site-data.js
@@ -30,6 +34,12 @@ googlesite/
 │  ├─ links.js
 │  └─ embed-data.js
 ├─ pages/
+├─ gas/
+│  ├─ Code.gs
+│  ├─ Index.html
+│  └─ appsscript.json
+├─ admin/
+│  └─ README.md
 ├─ assets/
 ├─ PROJECT.md
 └─ CHANGELOG.md
@@ -39,13 +49,18 @@ googlesite/
 
 | 要修改什麼 | 檔案 |
 | --- | --- |
-| 網站名稱、Hero 標題、關鍵字 | `data/site-config.js` |
+| 網站名稱、Hero 標題、關鍵字 | `data/site-config.js`（後台「⚙️ 後台設定」可覆寫） |
+| 後台公開資料 API 網址、逾時、後台時區 | `data/site-config.js` |
+| 前台與後台的連線、後台時間同步邏輯 | `js/backend.js` |
 | 六大主題卡片 | `data/subjects.js` |
 | 今日學習 | `data/courses.js` |
 | 最新消息 | `data/news.js` |
 | 快速連結與登入提示 | `data/links.js` |
 | Google Sites 嵌入版外觀 | `css/embed.css` |
 | 嵌入版程式 | `js/embed.js` |
+| 後台管理畫面（登入頁／選單／儀表板／管理頁） | `gas/Index.html`（依設計圖 `admin.png`，新增模組要沿用同一套樣式） |
+| 後台資料欄位、白名單、公開資料 API、後台時間 | `gas/Code.gs` |
+| 後台設定可調整的網站資料欄位 | `gas/Code.gs` 的 `SETTINGS_FIELDS` |
 | 完整主題頁內容 | 暫時仍由 `data/site-data.js` 管理 |
 
 ## Google Sites

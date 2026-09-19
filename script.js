@@ -18,6 +18,20 @@
   var DATA = window.SITE_DATA || {};
   var SITE = DATA.site || {};
 
+  /* 內建網站基本資料的快照：後台「後台設定」（公開 API 的 settings）會覆寫 SITE 的欄位，
+   * 這裡保留原值，用來替換 <title>／og 標籤裡的舊名稱（未設定時完全不受影響）。 */
+  var STATIC_SITE = Object.assign({}, SITE);
+
+  /* 內建導覽列的快照：後台「後台連結管理」的項目會與它合併（同名覆寫、新的附加在後），
+   * 因此連線後新增連結不會讓原本的選單消失。 */
+  var STATIC_NAV = (DATA.nav || []).slice();
+
+  /* 後台連線模組（js/backend.js，需先載入 data/site-config.js）。
+   * DANA_SITE_CONFIG 提供公開資料 API 網址與逾時；
+   * DANA_BACKEND 負責「與後台連結」與「時間以後台時間為準」。
+   * 未載入時（例如舊快取）網站仍會用 GitHub 靜態資料正常顯示。 */
+  var BACKEND = window.DANA_BACKEND || null;
+
   // 目前頁面代號（由 <body data-page="..."> 決定）
   var PAGE = document.body.getAttribute("data-page") || "index";
 
@@ -97,7 +111,7 @@
     var items = (DATA.nav || [])
       .map(function (item) {
         var active = item.match === PAGE;
-        var icon = navIcons[item.label] || "•";
+        var icon = item.icon || navIcons[item.label] || "•";
         return (
           '<li><a href="' +
           esc(navLink(item.href)) +
@@ -163,9 +177,63 @@
       "</header>";
   }
 
+  /** 頁尾年份：已與後台同步時用後台時間的年，否則用裝置時間（僅過渡狀態） */
+  function footerYear() {
+    if (BACKEND && BACKEND.synced()) return BACKEND.year();
+    return new Date().getFullYear();
+  }
+
+  /** 頁尾「最後更新」：連上後台後改顯示後台產生的時間（代表這份資料是後台時間） */
+  function footerUpdated() {
+    if (BACKEND && BACKEND.synced() && BACKEND.generatedAt()) {
+      return { text: BACKEND.generatedAt() + "（後台時間）", source: "backend" };
+    }
+    return { text: SITE.updated || "", source: "static" };
+  }
+
+  /** 頁尾的後台連結欄（依分組輸出 <div> 區塊；沒有後台連結時回傳空字串，頁尾維持原本三欄） */
+  function footerLinkColumns() {
+    var items = DATA.footerLinks || [];
+    if (!items.length) return "";
+
+    var groups = {};
+    var order = [];
+
+    items.forEach(function (item) {
+      var group = item.group || "相關連結";
+      if (!groups[group]) {
+        groups[group] = [];
+        order.push(group);
+      }
+      groups[group].push(item);
+    });
+
+    return order
+      .map(function (group) {
+        var list = groups[group]
+          .map(function (item) {
+            var external = /^https?:/.test(item.href || "");
+            return (
+              "<li><a href=\"" +
+              esc(external ? item.href : link(item.href)) +
+              '"' +
+              (external ? ' target="_blank" rel="noopener"' : "") +
+              ">" +
+              esc(item.label) +
+              "</a></li>"
+            );
+          })
+          .join("");
+        return "<div><h3>" + esc(group) + "</h3><ul>" + list + "</ul></div>";
+      })
+      .join("");
+  }
+
   function renderFooter() {
     var host = el("site-footer");
     if (!host) return;
+
+    var updated = footerUpdated();
 
     var subjects = (DATA.subjects || [])
       .map(function (s) {
@@ -188,9 +256,14 @@
       })
       .join("");
 
+    /* 後台「後台連結管理」建立的頁尾連結：依「分組」分欄，預設為「相關連結」 */
+    var footerLinks = footerLinkColumns();
+
     host.innerHTML =
       '<footer class="site-footer">' +
-      '<div class="container footer-grid">' +
+      '<div class="container footer-grid' +
+      (footerLinks ? " has-extra" : "") +
+      '">' +
       '<div class="footer-about">' +
       '<p class="footer-brand"><span aria-hidden="true">🌳</span> ' +
       esc(SITE.name || "") +
@@ -212,23 +285,48 @@
       "<div><h3>快速連結</h3><ul>" +
       links +
       "</ul></div>" +
+      footerLinks +
       "</div>" +
       '<div class="container footer-bottom">' +
       "<p>© " +
-      new Date().getFullYear() +
+      footerYear() +
       " " +
       esc(SITE.school || "") +
       " ・ " +
       esc(SITE.name || "") +
       "</p>" +
-      "<p>最後更新：<span>" +
-      esc(SITE.updated || "") +
+      '<p>最後更新：<span id="footer-updated" data-source="' +
+      esc(updated.source) +
+      '">' +
+      esc(updated.text) +
       "</span></p>" +
       "</div>" +
       "</footer>";
   }
 
   /* --- 3. 導覽互動 ----------------------------------------------------- */
+
+  /* 搜尋面板目前的元素（renderHeader() 重新渲染後會更新，供 closeSearch() 使用） */
+  var searchEls = { toggle: null, panel: null, input: null, status: null, form: null };
+
+  function closeSearch() {
+    if (!searchEls.panel || !searchEls.toggle) return;
+    searchEls.panel.hidden = true;
+    searchEls.toggle.setAttribute("aria-expanded", "false");
+  }
+
+  /* 文件層級的監聽只註冊一次（renderHeader() 重繪不會重複綁定） */
+  function setupHeaderSearchGlobal() {
+    document.addEventListener("keydown", function (event) {
+      if (event.key === "Escape") closeSearch();
+    });
+
+    document.addEventListener("click", function (event) {
+      if (!searchEls.panel || searchEls.panel.hidden) return;
+      if (searchEls.panel.contains(event.target) || searchEls.toggle.contains(event.target)) return;
+      closeSearch();
+    });
+  }
 
   function setupNavToggle() {
     var toggle = document.querySelector(".nav-toggle");
@@ -252,17 +350,18 @@
   }
 
   function setupHeaderSearch() {
-    var toggle = document.querySelector(".header-search-toggle");
-    var panel = el("header-search-panel");
-    var input = el("header-search-input");
-    var status = document.querySelector(".header-search-status");
-    var form = document.querySelector(".header-search-form");
-    if (!toggle || !panel || !input || !form) return;
+    searchEls.toggle = document.querySelector(".header-search-toggle");
+    searchEls.panel = el("header-search-panel");
+    searchEls.input = el("header-search-input");
+    searchEls.status = document.querySelector(".header-search-status");
+    searchEls.form = document.querySelector(".header-search-form");
 
-    function closeSearch() {
-      panel.hidden = true;
-      toggle.setAttribute("aria-expanded", "false");
-    }
+    var toggle = searchEls.toggle;
+    var panel = searchEls.panel;
+    var input = searchEls.input;
+    var status = searchEls.status;
+    var form = searchEls.form;
+    if (!toggle || !panel || !input || !form) return;
 
     toggle.addEventListener("click", function () {
       var willOpen = panel.hidden;
@@ -301,16 +400,6 @@
       if (status) {
         status.textContent = found ? "已找到本頁相關文字。" : "本頁找不到「" + query + "」。";
       }
-    });
-
-    document.addEventListener("keydown", function (event) {
-      if (event.key === "Escape") closeSearch();
-    });
-
-    document.addEventListener("click", function (event) {
-      if (panel.hidden) return;
-      if (panel.contains(event.target) || toggle.contains(event.target)) return;
-      closeSearch();
     });
   }
 
@@ -399,6 +488,13 @@
     render("subject-grid", html);
   }
 
+  /** 面板日期：一律以「後台時間」為準（js/backend.js 與後台同步），
+   *  連不到後台時才退回資料檔的日期，避免學生電腦時間設錯時看到錯的日期。 */
+  function todayMetaLabel() {
+    if (BACKEND && BACKEND.synced()) return BACKEND.dateLabel();
+    return (DATA.today && DATA.today.dateLabel) || "";
+  }
+
   function renderToday() {
     var today = DATA.today || {};
     var courses = (today.courses || [])
@@ -431,14 +527,14 @@
 
     if (!el("today-panel")) return;
 
+    var meta = todayMetaLabel();
+
     render(
       "today-panel",
       panelHead(
         "today",
         "今日學習",
-        today.dateLabel
-          ? '<span class="panel-meta">' + esc(today.dateLabel) + "</span>"
-          : ""
+        meta ? '<span class="panel-meta">' + esc(meta) + "</span>" : ""
       ) +
         '<div class="course-block">' +
         '<p class="course-block-title">本週課程</p>' +
@@ -538,6 +634,232 @@
         list +
         "</ul>"
     );
+  }
+
+  /* --- 4b. 後台連線（資料與時間同步） ---------------------------------- */
+
+  /**
+   * 與後台連結：
+   *   1. 先顯示 GitHub 靜態資料（data/site-data.js），打開頁面就有內容。
+   *   2. 再讀後台公開資料 API，成功時以 Google Sheet 最新資料覆寫。
+   *   3. 同時以後台回傳的 serverTime 校正前端時鐘，日期與時間都以後台為準。
+   * 連不到後台時只印警告，畫面維持靜態備援資料。
+   */
+  function connectBackend() {
+    if (!BACKEND) {
+      if (window.console && window.console.warn) {
+        window.console.warn("找不到 js/backend.js，無法與後台連結，將只顯示 GitHub 靜態資料。");
+      }
+      return;
+    }
+
+    /* 時間同步完成（或再次同步）後，用後台時間重繪日期與頁尾 */
+    BACKEND.onSync(function () {
+      renderToday();
+      renderFooter();
+      document.documentElement.setAttribute("data-live-time", "true");
+    });
+
+    BACKEND.load({
+      onData: applyLiveData,
+      onError: function (error) {
+        if (window.console && window.console.warn) {
+          window.console.warn(
+            "無法與後台連結，使用 GitHub 靜態備援資料：" +
+              (error && error.message ? error.message : error)
+          );
+        }
+      }
+    });
+  }
+
+  /** 後台資料覆寫靜態資料（保留只有靜態檔才有的欄位：課程 CTA、快速連結副標） */
+  function applyLiveData(remote) {
+    if (!remote || remote.ok !== true) return;
+
+    var staticQuickLinks = DATA.quickLinks || [];
+
+    /* 後台設定：網站基本資料與文案（會重繪頁首／頁尾與瀏覽器標題） */
+    if (remote.settings && typeof remote.settings === "object") {
+      applySiteSettings(remote.settings);
+    }
+
+    /* today 用合併，讓 data/site-data.js 的 cta 等欄位不被後台覆蓋掉 */
+    if (remote.today) DATA.today = Object.assign({}, DATA.today || {}, remote.today);
+    if (Array.isArray(remote.news) && remote.news.length) DATA.news = remote.news;
+    if (Array.isArray(remote.quickLinks) && remote.quickLinks.length) {
+      DATA.quickLinks = remote.quickLinks.map(function (item) {
+        var base =
+          staticQuickLinks.filter(function (q) {
+            return String(q.name) === String(item.name);
+          })[0] || {};
+        return Object.assign({}, base, item);
+      });
+    }
+
+    renderToday();
+    renderNews();
+    renderQuickLinks();
+
+    /* 後台連結管理：導覽列與頁尾連結（會一併重繪 header／footer） */
+    if (Array.isArray(remote.siteLinks)) {
+      applySiteLinks(remote.siteLinks);
+    } else {
+      renderFooter();
+    }
+
+    document.documentElement.setAttribute("data-live-data", "true");
+  }
+
+  /**
+   * 「後台連結管理」資料（公開 API 的 siteLinks）：
+   *   area=nav    → 覆寫前台導覽列（label／href／icon，match 由 href 推導）
+   *   area=footer → 前台頁尾的後台連結欄（依 group 分組）
+   * 後台沒有資料時維持 data/site-data.js 的靜態選單。
+   */
+  function applySiteLinks(links) {
+    var navItems = [];
+    var footerItems = [];
+
+    (links || []).forEach(function (item) {
+      if (!item || !item.label) return;
+      if (item.area === "footer") footerItems.push(item);
+      else navItems.push(item);
+    });
+
+    if (navItems.length) {
+      DATA.nav = mergeNavItems(navItems);
+      /* 導覽列換成後台內容後，重新綁定選單與搜尋（文件層級監聽只在 init 綁一次） */
+      renderHeader();
+      setupNavToggle();
+      setupHeaderSearch();
+    }
+
+    DATA.footerLinks = footerItems;
+    renderFooter();
+  }
+
+  /** 後台導覽列項目與內建選單合併：名稱相同時覆寫，新名稱附加在後面 */
+  function mergeNavItems(navItems) {
+    var merged = STATIC_NAV.map(function (item) {
+      return item;
+    });
+
+    navItems.forEach(function (item) {
+      var index = -1;
+      for (var i = 0; i < merged.length; i++) {
+        if (String(merged[i].label) === String(item.label)) {
+          index = i;
+          break;
+        }
+      }
+
+      var entry = {
+        label: item.label,
+        href: item.href || "index.html",
+        icon: item.icon || "",
+        match: matchFromHref(item.href)
+      };
+
+      if (index >= 0) merged[index] = Object.assign({}, merged[index], entry);
+      else merged.push(entry);
+    });
+
+    return merged;
+  }
+
+  /** 由連結推導導覽列的 match 值（pages/math.html → math、index.html → index、index.html#teacher → teacher） */
+  function matchFromHref(href) {
+    var value = String(href || "").trim();
+    var hashIndex = value.indexOf("#");
+    if (hashIndex >= 0) return value.slice(hashIndex + 1) || "index";
+
+    var base = value.replace(/^\.?\//, "").split("/").pop().replace(/\.html$/, "");
+    return base === "index" || base === "" ? "index" : base;
+  }
+
+  /**
+   * 「後台設定」資料（公開 API 的 settings）：網站名稱、學校、標語、頁尾說明與 Hero 文案。
+   * 只覆寫有填寫的欄位，空白欄位一律沿用 data/site-data.js 的內建內容。
+   */
+  function applySiteSettings(settings) {
+    var map = {
+      site_name: "name",
+      school: "school",
+      school_en: "schoolEn",
+      grade: "grade",
+      tagline: "tagline",
+      description: "description",
+      hero_title: "heroTitle",
+      hero_lead: "heroLead"
+    };
+
+    var changed = false;
+
+    Object.keys(map).forEach(function (key) {
+      var value = String(settings[key] == null ? "" : settings[key]).trim();
+      if (!value) return;
+      SITE[map[key]] = value;
+      changed = true;
+    });
+
+    /* 學習關鍵字：後台用「、」或逗號分隔，前景用陣列 */
+    var keywordText = String(settings.keywords == null ? "" : settings.keywords).trim();
+    if (keywordText) {
+      var keywords = keywordText
+        .split(/[、,，;；]/)
+        .map(function (item) {
+          return item.trim();
+        })
+        .filter(function (item) {
+          return item !== "";
+        });
+      if (keywords.length) {
+        SITE.keywords = keywords;
+        changed = true;
+      }
+    }
+
+    if (!changed) return false;
+
+    DATA.site = SITE; // 讓其他讀 DATA.site 的地方也拿到後台設定
+    applySiteTitle();
+    renderHeader();
+    setupNavToggle();
+    setupHeaderSearch();
+    renderFooter();
+    return true;
+  }
+
+  /** 瀏覽器標題與 og 標籤：把內建網站名稱／標語換成後台設定的內容（找不到就維持原樣） */
+  function applySiteTitle() {
+    var oldName = String(STATIC_SITE.name || "");
+    var newName = String(SITE.name || "");
+    var oldTagline = String(STATIC_SITE.tagline || "");
+    var newTagline = String(SITE.tagline || "");
+
+    if (oldName && newName && oldName !== newName) {
+      if (document.title && document.title.indexOf(oldName) >= 0) {
+        document.title = document.title.split(oldName).join(newName);
+      }
+      var ogTitle = document.querySelector('meta[property="og:title"]');
+      if (ogTitle) {
+        var ogTitleText = String(ogTitle.getAttribute("content") || "");
+        if (ogTitleText.indexOf(oldName) >= 0) {
+          ogTitle.setAttribute("content", ogTitleText.split(oldName).join(newName));
+        }
+      }
+    }
+
+    if (oldTagline && newTagline && oldTagline !== newTagline) {
+      var ogDescription = document.querySelector('meta[property="og:description"]');
+      if (ogDescription) {
+        var ogText = String(ogDescription.getAttribute("content") || "");
+        if (ogText.indexOf(oldTagline) >= 0) {
+          ogDescription.setAttribute("content", ogText.split(oldTagline).join(newTagline));
+        }
+      }
+    }
   }
 
   /* --- 5. 內頁區塊 ----------------------------------------------------- */
@@ -679,6 +1001,7 @@
     renderFooter();
     setupNavToggle();
     setupHeaderSearch();
+    setupHeaderSearchGlobal();
 
     renderSubjects();
     renderToday();
@@ -690,6 +1013,9 @@
     renderTasks();
     renderGallery();
     renderOtherSubjects();
+
+    /* 靜態內容先顯示，再與後台連線更新資料與時間 */
+    connectBackend();
   }
 
   if (document.readyState === "loading") {

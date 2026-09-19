@@ -611,6 +611,11 @@ button.section-link:hover {
   gap: 32px;
 }
 
+/* 後台「後台連結管理」有建立頁尾連結時，頁尾多一欄（相關連結） */
+.footer-grid.has-extra {
+  grid-template-columns: 1.6fr repeat(3, 1fr);
+}
+
 .site-footer h3 {
   color: #fff;
   font-size: .95rem;
@@ -1459,7 +1464,8 @@ button.section-link:hover {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .footer-grid {
+  .footer-grid,
+  .footer-grid.has-extra {
     grid-template-columns: 1fr 1fr;
   }
 }
@@ -1575,6 +1581,7 @@ button.section-link:hover {
   .dashboard,
   .resource-list,
   .footer-grid,
+  .footer-grid.has-extra,
   .quick-list {
     grid-template-columns: 1fr;
   }
