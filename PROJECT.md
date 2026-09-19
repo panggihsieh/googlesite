@@ -60,7 +60,8 @@ googlesite/
 │
 ├─ assets/
 │  ├─ images/
-│  │  └─ hero-campus.svg
+│  │  ├─ home-hero-banner.jpg     # 首頁 Hero 橫幅（layout.png Hero 全寬 1672×280）
+│  │  └─ embed-hero-banner.jpg    # 嵌入版 Hero 背景（layout.png 照片區 1032×280）
 │  └─ icons/
 │
 ├─ PROJECT.md
@@ -79,14 +80,24 @@ googlesite/
 | 快速連結 | `data/links.js` |
 | Google Sites 嵌入版外觀 | `css/embed.css` |
 | 嵌入首頁渲染邏輯 | `js/embed.js` |
+| 後台管理入口網址（首頁 ⚙️、嵌入版 ⚙️） | `index.html`、`google-sites-embed.html`（兩處要一起改；與 `data/site-config.js` 的 `publicApiUrl` 是同一個部署，只差 `?api=public`） |
+| 首頁橫幅圖／嵌入版 Hero 圖 | `assets/images/home-hero-banner.jpg`、`assets/images/embed-hero-banner.jpg` |
+| 首頁版面（區塊組成、容器寬度、卡片欄數） | `index.html`、`style.css`（設計依據：`layout.png`） |
+| 首頁配色（藍色系主色、面板淡藍底） | `style.css` 的 `body[data-page="index"]` 變數區 |
+| 首頁主題卡片底色／文字色（`tint`／`ink`） | `data/site-data.js` 的 `subjects` |
+| 「開始今天的學習」按鈕文字與連結 | `data/site-data.js` 的 `today.cta` |
+| 首頁快速連結的副標（例如 GeoGebra／數學工具） | `data/site-data.js` 的 `quickLinks[].note` |
 | 國語／數學等完整主題頁內容 | 暫時仍由 `data/site-data.js` 管理 |
 
 ## 6. 響應式規則
 
 - 桌機 Google Sites iframe 寬度 >= 900px：六張主題卡強制同一排。
+- 首頁（GitHub Pages）：>= 1400px 六大主題卡一列 6 張；1400px 以下 3 欄、680px 以下單欄。
+- 首頁內容寬度＝視窗寬度 − 26px×2（`--gutter: 26px`、`--maxw: 1700px`），與設計圖 `layout.png` 的內容邊界相同。
+- 首頁儀表板：桌機三欄（1.164 : 1.071 : 1，間距 26px）、1000px 以下兩欄（快速連結整列）、680px 以下單欄。
+- 首頁快速連結：面板內 2 欄方框（680px 以下單欄）。
 - 700–899px：三欄。
 - < 700px：兩欄。
-- Dashboard 桌機三欄、平板兩欄、手機單欄。
 - 禁止使用會導致 iframe 橫向溢出的固定大寬度。
 - 不以 `100vw` 作主要容器寬度。
 

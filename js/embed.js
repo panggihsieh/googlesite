@@ -16,6 +16,16 @@
       .replace(/"/g, "&quot;");
   }
 
+  /** 資料來源若寫 index.html，一律改用資料夾網址，避免網址列出現 index.html */
+  function siteHref(path) {
+    var value = String(path == null ? "" : path);
+    var cut = value.indexOf("#");
+    var hash = cut >= 0 ? value.slice(cut) : "";
+    var core = cut >= 0 ? value.slice(0, cut) : value;
+    if (core === "index.html" || core === "./index.html") return "./" + hash;
+    return value;
+  }
+
   function renderHero() {
     var title = document.getElementById("hero-title");
     var lead = document.getElementById("hero-lead");
@@ -39,7 +49,7 @@
     host.innerHTML = (DATA.subjects || [])
       .map(function (s) {
         return (
-          '<a class="subject-card" href="' + esc(s.href) + '" style="--card:' + esc(s.color) + '">' +
+          '<a class="subject-card" href="' + esc(siteHref(s.href)) + '" style="--card:' + esc(s.color) + '">' +
           '<span class="subject-icon" aria-hidden="true">' + esc(s.icon) + "</span>" +
           "<h2>" + esc(s.title) + "</h2>" +
           '<p class="subject-desc">' + esc(s.desc) + "</p>" +
@@ -65,7 +75,7 @@
           '<span class="course-period">' + esc(c.period) + "</span>" +
           '<span class="course-body">' +
           '<span class="course-subject">' + esc(c.subject) + "</span>" +
-          '<a class="course-title" href="' + esc(c.href) + '">' + esc(c.title) + "</a>" +
+          '<a class="course-title" href="' + esc(siteHref(c.href)) + '">' + esc(c.title) + "</a>" +
           "</span>" +
           "</li>"
         );
@@ -84,7 +94,7 @@
           "<li>" +
           '<span class="news-date">' + esc(n.date) + "</span>" +
           '<span class="news-body">' +
-          '<a class="news-title" href="' + esc(n.href) + '">' + esc(n.title) + "</a>" +
+          '<a class="news-title" href="' + esc(siteHref(n.href)) + '">' + esc(n.title) + "</a>" +
           '<span class="tag">' + esc(n.tag) + "</span>" +
           "</span>" +
           "</li>"

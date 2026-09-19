@@ -29,7 +29,21 @@ Spreadsheet ID：
 - `quick_links`
 - `settings`
 
-## 部署方式
+## 目前的實際部署（2026-09-19）
+
+- 目前只使用**一個** Web App 部署：
+
+  `https://script.google.com/macros/s/AKfycbz2iBSQqlYOeNbuOrDp72FdzFhBhJEk6QocNep7uwkZrN9amNymcU4ENbFkSWd2PjUo/exec`
+
+  - 執行身分：**我**、存取權：**任何人**
+  - 不帶參數 → **後台管理畫面**（首頁與嵌入版的 ⚙️ 都連這裡）
+  - 加上 `?api=public` → **公開資料 API**（`data/site-config.js` 的 `publicApiUrl`）
+- 舊的獨立後台部署 `AKfycbxdJ4…` 已失效（匿名 `404`），請勿再使用。
+- 注意：目前是「以我執行」，`Session.getActiveUser().getEmail()` 有可能拿不到訪客帳號，導致後台顯示「尚未取得登入帳號」。若遇到這種情況，請改回下面第一個部署的設定（執行身分＝**存取網頁應用程式的使用者**、存取權＝**擁有 Google 帳號的使用者**），並把 `index.html`、`google-sites-embed.html` 的 ⚙️ 改成該部署網址。
+
+以下兩段保留為部署設計參考。
+
+## 第一個部署：後台管理
 
 1. 到 script.google.com 建立 Apps Script 專案。
 2. 把 `gas/Code.gs`、`gas/Index.html`、`gas/appsscript.json` 內容貼入。

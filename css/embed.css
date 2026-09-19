@@ -75,7 +75,7 @@ a:focus-visible {
   padding: 46px 0 40px;
   background:
     linear-gradient(90deg, rgba(255,255,255,.97) 0%, rgba(255,255,255,.82) 38%, rgba(255,255,255,.16) 68%, rgba(255,255,255,.04) 100%),
-    url("../assets/images/hero-campus.svg") center right / cover no-repeat;
+    url("../assets/images/embed-hero-banner.jpg") right bottom / cover no-repeat;
   border-bottom: 1px solid #dcecf8;
 }
 
@@ -375,7 +375,7 @@ a:focus-visible {
   .hero {
     min-height: 230px;
     padding: 30px 0 28px;
-    background-position: 68% center;
+    background-position: 88% center;
   }
 
   .hero h1 {

@@ -9,8 +9,22 @@
 <meta property="og:title" content="大南老邦教學網">
 <meta property="og:description" content="學習 × 探究 × 創造更好的自己">
 <meta property="og:type" content="website">
+<link rel="canonical" href="https://panggihsieh.github.io/googlesite/">
+<meta property="og:url" content="https://panggihsieh.github.io/googlesite/">
 <link rel="icon" href="assets/icons/favicon.svg">
 <link rel="stylesheet" href="style.css">
+<!-- 網址正規化：/googlesite/index.html 一律顯示成 /googlesite/
+     GitHub Pages 沒有伺服器端轉址，因此載入時用 replaceState 改寫網址列（不重新載入）。 -->
+<script>
+(function () {
+  if (!/\/index\.html$/.test(location.pathname)) return;
+  try {
+    history.replaceState(null, "", location.pathname.replace(/index\.html$/, "") + location.search + location.hash);
+  } catch (error) {
+    /* 瀏覽器不支援時維持原網址，功能不受影響 */
+  }
+})();
+</script>
 </head>
 <body data-page="index" class="visual-nav">
 
@@ -22,38 +36,35 @@
 
   <!-- 首頁 Hero -->
   <section class="hero-banner" aria-label="學習 × 探究 ×">
+    <a
+      class="admin-entry"
+      href="https://script.google.com/macros/s/AKfycbz2iBSQqlYOeNbuOrDp72FdzFhBhJEk6QocNep7uwkZrN9amNymcU4ENbFkSWd2PjUo/exec"
+      target="_blank"
+      rel="noopener"
+      aria-label="開啟後台管理"
+      title="後台管理"
+    >⚙️</a>
     <img
       class="hero-banner-image"
-      src="assets/images/home-hero-banner.svg"
-      alt="學習 × 探究 ×。大南國小高年級數位學習 × AI × 探究實作。閱讀世界、探索自然、擁抱科技、創造未來。"
+      src="assets/images/home-hero-banner.jpg"
+      alt="大南老邦教學網。大南國小高年級數位學習 × AI × 探究實作。閱讀世界、探索自然、擁抱科技、創造未來。"
     >
   </section>
 
-  <!-- 六大主題入口 -->
-  <section class="section" id="subjects">
+  <!-- 六大主題入口
+       依設計圖 layout.png：卡片區緊接橫幅，設計圖上沒有「六大主題入口」標題與副標 -->
+  <section class="section section-subjects" id="subjects" aria-label="六大主題入口">
     <div class="container">
-      <header class="section-head">
-        <h2>六大主題入口</h2>
-        <p>選一個主題，開始今天的學習</p>
-      </header>
       <div class="subject-grid" id="subject-grid"></div>
     </div>
   </section>
 
   <!-- 今日學習 / 最新消息 / 快速連結 -->
-  <section class="section section-soft" id="today" aria-label="今日學習、最新消息與快速連結">
+  <section class="section section-soft section-dashboard" id="today" aria-label="今日學習、最新消息與快速連結">
     <div class="container dashboard">
       <div class="panel" id="today-panel"></div>
-      <div class="panel" id="news-panel"></div>
+      <div class="panel panel-news" id="news-panel"></div>
       <div class="panel panel-quick" id="quick-panel"></div>
-    </div>
-  </section>
-
-  <!-- 教師專區 / 關於大南 -->
-  <section class="section" id="teacher">
-    <div class="container split">
-      <div class="info-block" id="teacher-content"></div>
-      <div class="info-block" id="about"></div>
     </div>
   </section>
 

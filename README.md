@@ -68,5 +68,6 @@ https://panggihsieh.github.io/googlesite/google-sites-embed.html
 
 - 詳細規格：`PROJECT.md`
 - 修改紀錄：`CHANGELOG.md`
+- 公開存取檢查清單：`PUBLIC-ACCESS-CHECKLIST.md`
 
 如果使用 ChatGPT、Codex 或 Zed 維護，建議先讀 `PROJECT.md` 與 `CHANGELOG.md` 再修改。

@@ -37,13 +37,20 @@ const SITE_DATA = {
     { label: "關於大南", href: "index.html#about", match: "about" }
   ],
 
-  /* --- 六大主題入口 ------------------------------------------------------ */
+  /* --- 六大主題入口 ------------------------------------------------------
+     設計圖 layout.png 的六張主題卡片：
+     color ＝ 主題主色（內頁頁首沿用）
+     tint  ＝ 卡片底色（淺）
+     ink   ＝ 卡片文字色（深）
+     三色都可在這裡調整，卡片與「今日學習」科目徽章會一起跟著換色。 */
   subjects: [
     {
       id: "chinese",
       title: "國語",
       icon: "📖",
       color: "#d1564f",
+      tint: "#fde7e9",
+      ink: "#9b2226",
       desc: "課文 • 生字 • 成語",
       extra: "閱讀理解",
       href: "pages/chinese.html"
@@ -53,6 +60,8 @@ const SITE_DATA = {
       title: "數學",
       icon: "📐",
       color: "#3b74d1",
+      tint: "#def2fd",
+      ink: "#0b3d6b",
       desc: "概念 • 例題 • 互動練習",
       extra: "數學遊戲",
       href: "pages/math.html"
@@ -62,6 +71,8 @@ const SITE_DATA = {
       title: "環境教育",
       icon: "🌿",
       color: "#2f9367",
+      tint: "#e4f7e5",
+      ink: "#1b5e20",
       desc: "校園植物 • 生態觀察",
       extra: "永續 • 防災",
       href: "pages/env.html"
@@ -71,6 +82,8 @@ const SITE_DATA = {
       title: "AI 科技",
       icon: "🤖",
       color: "#6d5bd0",
+      tint: "#eee5fd",
+      ink: "#2e2a96",
       desc: "AI 入門 • 程式設計",
       extra: "機器人 • 3D 設計",
       href: "pages/ai.html"
@@ -80,6 +93,8 @@ const SITE_DATA = {
       title: "學習任務",
       icon: "📝",
       color: "#c8791c",
+      tint: "#feebda",
+      ink: "#8a3b00",
       desc: "作業 • 學習單",
       extra: "線上測驗",
       href: "pages/tasks.html"
@@ -89,6 +104,8 @@ const SITE_DATA = {
       title: "學生作品",
       icon: "🎨",
       color: "#c74f8c",
+      tint: "#fdf4ce",
+      ink: "#7a4a00",
       desc: "作文 • 專題 • 3D 作品",
       extra: "作品展示",
       href: "pages/works.html"
@@ -104,7 +121,9 @@ const SITE_DATA = {
       { period: "第二節", subject: "數學", title: "分數除法", href: "pages/math.html" },
       { period: "第三節", subject: "環境", title: "校園樹木與環境", href: "pages/env.html" },
       { period: "第四節", subject: "AI", title: "校園樹木辨識", href: "pages/ai.html" }
-    ]
+    ],
+    /* 設計圖 layout.png 面板底部的藍色按鈕（連結目標可自行調整） */
+    cta: { label: "開始今天的學習", href: "pages/chinese.html" }
   },
 
   /* --- 最新消息 ---------------------------------------------------------- */
@@ -118,36 +137,15 @@ const SITE_DATA = {
 
   /* --- 快速連結 ---------------------------------------------------------- */
   quickLinks: [
-    { name: "Google 雲端硬碟", icon: "📁", url: "https://drive.google.com/" },
     { name: "Google Classroom", icon: "🏫", url: "https://classroom.google.com/" },
+    { name: "Google 雲端硬碟", icon: "📁", url: "https://drive.google.com/" },
     { name: "Google 表單", icon: "📋", url: "https://docs.google.com/forms/" },
-    { name: "Scratch", icon: "🐱", url: "https://scratch.mit.edu/" },
-    { name: "GeoGebra", icon: "📈", url: "https://www.geogebra.org/" },
-    { name: "Tinkercad", icon: "🧊", url: "https://www.tinkercad.com/" },
+    { name: "GeoGebra", note: "數學工具", icon: "📈", url: "https://www.geogebra.org/" },
+    { name: "Scratch", note: "程式設計", icon: "🐱", url: "https://scratch.mit.edu/" },
+    { name: "Tinkercad", note: "3D 設計", icon: "🧊", url: "https://www.tinkercad.com/" },
     { name: "因材網", icon: "🧮", url: "https://adl.edu.tw/" },
     { name: "教育雲", icon: "☁️", url: "https://cloud.edu.tw/" }
   ],
-
-  /* --- 教師專區 ---------------------------------------------------------- */
-  teacher: {
-    note: "教材、作業與成績登記統一放在 Google 雲端工具，登入學校帳號即可使用。",
-    links: [
-      { name: "Google Classroom", icon: "🏫", url: "https://classroom.google.com/" },
-      { name: "雲端硬碟教材區", icon: "📁", url: "https://drive.google.com/" },
-      { name: "作業表單", icon: "📋", url: "https://docs.google.com/forms/" },
-      { name: "成績試算表", icon: "📊", url: "https://docs.google.com/spreadsheets/" }
-    ]
-  },
-
-  /* --- 關於大南 ---------------------------------------------------------- */
-  about: {
-    text: "大南國小位於自然環繞的校園環境，我們把閱讀、生態與科技放進同一個學習現場：孩子在課文裡讀世界，在校園裡做觀察，在電腦教室裡寫程式、做 3D 設計，把所學變成看得見的作品。",
-    facts: [
-      { label: "年級", value: "高年級" },
-      { label: "學習主題", value: "6 大" },
-      { label: "核心能力", value: "閱讀・探究・實作" }
-    ]
-  },
 
   /* --- 頁尾 -------------------------------------------------------------- */
   footer: {

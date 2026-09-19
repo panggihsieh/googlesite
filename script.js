@@ -26,10 +26,25 @@
     document.body.getAttribute("data-base") ||
     (/\/pages\//.test(window.location.pathname) ? ".." : ".");
 
+  /** 首頁檔名 index.html 改用資料夾網址（首頁 ./、內頁 ../），避免網址出現 index.html */
+  function pageHref(path) {
+    var hash = "";
+    var core = path;
+    var i = core.indexOf("#");
+    if (i >= 0) {
+      hash = core.slice(i);
+      core = core.slice(0, i);
+    }
+    if (core !== "index.html" && core !== "./index.html") return "";
+    return (BASE === "." ? "./" : "../") + hash;
+  }
+
   /** 把資料檔裡的相對路徑轉成目前頁面可用的路徑 */
   function link(path) {
     if (!path) return "#";
     if (/^(https?:|mailto:|tel:|#|\/\/)/.test(path)) return path;
+    var home = pageHref(path);
+    if (home) return home;
     if (BASE === ".") return path.replace(/^\.\//, "");
     return BASE + "/" + path.replace(/^\.\//, "");
   }
@@ -301,6 +316,59 @@
 
   /* --- 4. 首頁區塊 ----------------------------------------------------- */
 
+  /* 面板標題圖示（依設計圖 layout.png：三個面板標題左側都有藍色線條圖示） */
+  var PANEL_ICONS = {
+    today:
+      '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">' +
+      '<rect x="3.5" y="5" width="17" height="15.5" rx="3"/>' +
+      '<path d="M3.5 10h17M8.5 3.5V7M15.5 3.5V7"/>' +
+      '<path d="M8 13.5h.01M12 13.5h.01M16 13.5h.01M8 17h.01M12 17h.01M16 17h.01"/>' +
+      "</svg>",
+    news:
+      '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">' +
+      '<path d="M4 10.2a1.7 1.7 0 0 1 1.7-1.7H7l8.6-4.2a1 1 0 0 1 1.4.9v13.6a1 1 0 0 1-1.4.9L7 15.5H5.7A1.7 1.7 0 0 1 4 13.8z"/>' +
+      '<path d="M7 15.5 8.4 20h2.4l-1.2-4.5"/>' +
+      "</svg>",
+    quick:
+      '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">' +
+      '<path d="M9.6 14.4 14.4 9.6"/>' +
+      '<path d="M11 7.2l1.3-1.3a4.2 4.2 0 0 1 5.9 5.9l-1.3 1.3"/>' +
+      '<path d="M13 16.8l-1.3 1.3a4.2 4.2 0 0 1-5.9-5.9l1.3-1.3"/>' +
+      "</svg>"
+  };
+
+  /** 面板標題列：藍色圖示＋標題＋右側補充內容 */
+  function panelHead(icon, title, extra) {
+    return (
+      '<div class="panel-head">' +
+      '<span class="panel-icon" aria-hidden="true">' +
+      (PANEL_ICONS[icon] || "") +
+      "</span>" +
+      "<h3>" +
+      esc(title) +
+      "</h3>" +
+      (extra || "") +
+      "</div>"
+    );
+  }
+
+  /** 依科目名稱找出對應主題色，供「今日學習」的科目徽章使用 */
+  function courseSubjectStyle(name) {
+    var key = String(name == null ? "" : name).replace(/\s+/g, "");
+    var hit = (DATA.subjects || []).filter(function (s) {
+      var t = String(s.title).replace(/\s+/g, "");
+      return t === key || t.indexOf(key) === 0 || key.indexOf(t) === 0;
+    })[0];
+    if (!hit) return "";
+    return (
+      ' style="--course:' +
+      esc(hit.color) +
+      (hit.ink ? ";--course-ink:" + esc(hit.ink) : "") +
+      (hit.tint ? ";--course-tint:" + esc(hit.tint) : "") +
+      '"'
+    );
+  }
+
   function renderSubjects() {
     var html = (DATA.subjects || [])
       .map(function (s) {
@@ -309,6 +377,8 @@
           esc(link(s.href)) +
           '" style="--card:' +
           esc(s.color) +
+          (s.tint ? ";--tint:" + esc(s.tint) : "") +
+          (s.ink ? ";--ink-on-tint:" + esc(s.ink) : "") +
           '">' +
           '<span class="subject-icon" aria-hidden="true">' +
           esc(s.icon) +
@@ -322,7 +392,6 @@
           '<p class="subject-extra">' +
           esc(s.extra) +
           "</p>" +
-          '<span class="subject-more">前往 <span aria-hidden="true">→</span></span>' +
           "</a>"
         );
       })
@@ -335,11 +404,9 @@
     var courses = (today.courses || [])
       .map(function (c) {
         return (
-          "<li>" +
-          '<span class="course-period">' +
-          esc(c.period) +
-          "</span>" +
-          '<span class="course-body">' +
+          "<li" +
+          courseSubjectStyle(c.subject) +
+          ">" +
           '<span class="course-subject">' +
           esc(c.subject) +
           "</span>" +
@@ -348,29 +415,43 @@
           '">' +
           esc(c.title) +
           "</a>" +
-          "</span>" +
           "</li>"
         );
       })
       .join("");
 
+    var cta =
+      today.cta && today.cta.label
+        ? '<a class="panel-cta" href="' +
+          esc(link(today.cta.href)) +
+          '">' +
+          esc(today.cta.label) +
+          "</a>"
+        : "";
+
+    if (!el("today-panel")) return;
+
     render(
       "today-panel",
-      '<div class="panel-head">' +
-        "<h3>今日學習</h3>" +
-        '<span class="panel-meta">' +
-        esc(today.dateLabel || "") +
-        "</span>" +
-        "</div>" +
-        '<p class="course-subject" style="margin-bottom:10px">本週課程</p>' +
+      panelHead(
+        "today",
+        "今日學習",
+        today.dateLabel
+          ? '<span class="panel-meta">' + esc(today.dateLabel) + "</span>"
+          : ""
+      ) +
+        '<div class="course-block">' +
+        '<p class="course-block-title">本週課程</p>' +
         '<ul class="course-list">' +
         courses +
-        "</ul>"
+        "</ul>" +
+        "</div>" +
+        cta
     );
   }
 
   function renderNews() {
-    var VISIBLE = 3;
+    var VISIBLE = 5;
     var news = DATA.news || [];
 
     var list = news
@@ -388,9 +469,6 @@
           '">' +
           esc(n.title) +
           "</a>" +
-          '<span class="tag">' +
-          esc(n.tag) +
-          "</span>" +
           "</span>" +
           "</li>"
         );
@@ -406,10 +484,7 @@
 
     render(
       "news-panel",
-      '<div class="panel-head">' +
-        "<h3>最新消息</h3>" +
-        more +
-        "</div>" +
+      panelHead("news", "最新消息", more) +
         '<ul class="news-list">' +
         list +
         "</ul>"
@@ -442,7 +517,14 @@
           '<span class="quick-icon" aria-hidden="true">' +
           esc(q.icon) +
           "</span>" +
+          '<span class="quick-text">' +
+          '<span class="quick-name">' +
           esc(q.name) +
+          "</span>" +
+          (q.note
+            ? '<span class="quick-note">' + esc(q.note) + "</span>"
+            : "") +
+          "</span>" +
           "</a>" +
           "</li>"
         );
@@ -451,68 +533,10 @@
 
     render(
       "quick-panel",
-      '<div class="panel-head"><h3>快速連結</h3></div>' +
+      panelHead("quick", "快速連結") +
         '<ul class="quick-list">' +
         list +
         "</ul>"
-    );
-  }
-
-  function renderTeacher() {
-    var t = DATA.teacher || {};
-    var links = (t.links || [])
-      .map(function (l) {
-        return (
-          '<a class="chip" href="' +
-          esc(link(l.url)) +
-          '" target="_blank" rel="noopener">' +
-          '<span aria-hidden="true">' +
-          esc(l.icon) +
-          "</span>" +
-          esc(l.name) +
-          "</a>"
-        );
-      })
-      .join("");
-
-    render(
-      "teacher-content",
-      "<h2>教師專區</h2>" +
-        "<p>" +
-        esc(t.note) +
-        "</p>" +
-        '<div class="link-grid">' +
-        links +
-        "</div>"
-    );
-  }
-
-  function renderAbout() {
-    var a = DATA.about || {};
-    var facts = (a.facts || [])
-      .map(function (f) {
-        return (
-          '<div class="fact">' +
-          '<span class="fact-label">' +
-          esc(f.label) +
-          "</span>" +
-          '<span class="fact-value">' +
-          esc(f.value) +
-          "</span>" +
-          "</div>"
-        );
-      })
-      .join("");
-
-    render(
-      "about",
-      "<h2>關於大南</h2>" +
-        "<p>" +
-        esc(a.text) +
-        "</p>" +
-        '<div class="fact-row">' +
-        facts +
-        "</div>"
     );
   }
 
@@ -660,8 +684,6 @@
     renderToday();
     renderNews();
     renderQuickLinks();
-    renderTeacher();
-    renderAbout();
 
     renderFeatures();
     renderResources();
