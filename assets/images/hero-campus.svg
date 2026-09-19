@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 420">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#a9def7"/>
+      <stop offset="1" stop-color="#e9f7ff"/>
+    </linearGradient>
+    <linearGradient id="hill" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#79b9cf"/>
+      <stop offset="1" stop-color="#4d93b8"/>
+    </linearGradient>
+    <linearGradient id="grass" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#8fd06f"/>
+      <stop offset="1" stop-color="#4d9d5a"/>
+    </linearGradient>
+  </defs>
+  <rect width="1600" height="420" fill="url(#sky)"/>
+  <g opacity=".92">
+    <circle cx="180" cy="92" r="44" fill="#fff"/>
+    <circle cx="225" cy="88" r="56" fill="#fff"/>
+    <circle cx="270" cy="101" r="40" fill="#fff"/>
+    <circle cx="470" cy="70" r="30" fill="#fff"/>
+    <circle cx="505" cy="70" r="40" fill="#fff"/>
+    <circle cx="540" cy="80" r="28" fill="#fff"/>
+  </g>
+  <path d="M0 280 C180 210 300 260 420 205 C560 140 700 245 850 180 C1010 115 1160 210 1600 130 L1600 420 L0 420 Z" fill="url(#hill)" opacity=".78"/>
+  <path d="M0 320 C250 280 400 330 590 286 C830 230 1030 315 1240 250 C1380 210 1500 240 1600 220 L1600 420 L0 420 Z" fill="url(#grass)"/>
+  <g transform="translate(830 132)">
+    <rect x="0" y="72" width="560" height="138" rx="8" fill="#f7d8b1"/>
+    <rect x="18" y="86" width="524" height="28" fill="#d77f67"/>
+    <rect x="0" y="64" width="560" height="18" fill="#f5efe9"/>
+    <g fill="#79b8d3" stroke="#eef8fc" stroke-width="5">
+      <rect x="28" y="126" width="52" height="52"/>
+      <rect x="94" y="126" width="52" height="52"/>
+      <rect x="160" y="126" width="52" height="52"/>
+      <rect x="226" y="126" width="52" height="52"/>
+      <rect x="292" y="126" width="52" height="52"/>
+      <rect x="358" y="126" width="52" height="52"/>
+      <rect x="424" y="126" width="52" height="52"/>
+      <rect x="490" y="126" width="52" height="52"/>
+    </g>
+    <rect x="0" y="210" width="560" height="12" fill="#2e7d53"/>
+  </g>
+  <g>
+    <rect x="1360" y="62" width="12" height="180" fill="#8c6a45"/>
+    <circle cx="1366" cy="58" r="58" fill="#5aaa55"/>
+    <circle cx="1328" cy="86" r="42" fill="#66b65e"/>
+    <circle cx="1402" cy="84" r="44" fill="#75bf62"/>
+    <rect x="1170" y="88" width="11" height="150" fill="#8c6a45"/>
+    <circle cx="1176" cy="86" r="48" fill="#58a953"/>
+    <circle cx="1142" cy="100" r="34" fill="#6bb65e"/>
+    <circle cx="1210" cy="106" r="36" fill="#72bd65"/>
+  </g>
+  <g transform="translate(1270 250)">
+    <path d="M0 45 Q35 0 92 8 L270 14 Q305 18 324 54 L316 118 L12 118 Z" fill="#efe6d7" stroke="#cbbba0" stroke-width="4"/>
+    <text x="162" y="73" text-anchor="middle" font-size="40" font-family="serif" font-weight="700" fill="#1d1d1d">大南國小</text>
+    <text x="162" y="101" text-anchor="middle" font-size="18" font-family="sans-serif" fill="#2b2b2b">Da-Nan Elementary School</text>
+  </g>
+  <g fill="#4e9a53">
+    <circle cx="80" cy="338" r="52"/>
+    <circle cx="145" cy="344" r="46"/>
+    <circle cx="220" cy="334" r="58"/>
+    <circle cx="315" cy="345" r="50"/>
+    <circle cx="400" cy="340" r="56"/>
+  </g>
+</svg>
