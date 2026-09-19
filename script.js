@@ -488,11 +488,19 @@
     render("subject-grid", html);
   }
 
-  /** 面板日期：一律以「後台時間」為準（js/backend.js 與後台同步），
-   *  連不到後台時才退回資料檔的日期，避免學生電腦時間設錯時看到錯的日期。 */
+  /** 面板日期：連上後台時用後台時間；連不到時改用裝置時間在後台時區（Asia/Taipei）的今天，
+   *  避免看到 data/site-data.js 之類的開發假日期（例如 2025-08-30）、
+   *  又能在離線時仍顯示「今天的正確日期」（後台時區固定 UTC+8，不受裝置時區影響）。 */
   function todayMetaLabel() {
     if (BACKEND && BACKEND.synced()) return BACKEND.dateLabel();
-    return (DATA.today && DATA.today.dateLabel) || "";
+    var config = (typeof window !== "undefined" && window.DANA_SITE_CONFIG) || {};
+    var offsetMinutes = Number(config.timezoneOffsetMinutes) || 480;
+    var shifted = new Date(Date.now() + offsetMinutes * 60000);
+    var year = shifted.getUTCFullYear();
+    var month = shifted.getUTCMonth() + 1;
+    var day = shifted.getUTCDate();
+    var weekday = ["日", "一", "二", "三", "四", "五", "六"][shifted.getUTCDay()];
+    return year + " 年 " + month + " 月 " + day + " 日（" + weekday + "）";
   }
 
   function renderToday() {
