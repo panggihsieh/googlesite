@@ -925,6 +925,22 @@ body {
   }
 }
 
+
+
+/* Google Sites 嵌入：隱藏視覺捲軸（仍可用滑鼠滾輪／觸控捲動） */
+html,
+body {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
+
 </style>
 </head>
 <body>
