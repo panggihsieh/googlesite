@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="大南老邦教學網">
+  <rect width="64" height="64" rx="14" fill="#12695b"/>
+  <circle cx="32" cy="26" r="14" fill="#d8f0e8"/>
+  <circle cx="22" cy="33" r="9" fill="#b5e2d5"/>
+  <circle cx="42" cy="33" r="9" fill="#b5e2d5"/>
+  <rect x="29" y="36" width="6" height="17" rx="2.5" fill="#8fc9b7"/>
+</svg>

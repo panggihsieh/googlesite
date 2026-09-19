@@ -1,0 +1,10 @@
+# 作業系統與編輯器暫存檔
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+
+# 本機環境
+.env
+.vercel
+node_modules/
