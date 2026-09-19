@@ -764,6 +764,167 @@ a:hover { color: var(--brand-600); }
 @media print {
   .site-header, .site-footer, .hero-actions { display: none; }
 }
+
+
+/* ================================================================
+   Google Sites 專用嵌入最佳化覆寫
+   目的：移除 iframe 內重複導覽、減少留白、避免橫向捲軸、改善 iPad/手機版面
+   ================================================================ */
+html,
+body {
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+}
+
+html {
+  scroll-padding-top: 16px;
+}
+
+body {
+  min-width: 0;
+}
+
+.site-header,
+.site-footer,
+.skip-link {
+  display: none !important;
+}
+
+:root {
+  --maxw: 1320px;
+  --gutter: 24px;
+}
+
+.container {
+  width: 100%;
+  max-width: var(--maxw);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+
+.hero {
+  padding: 36px 0 34px;
+}
+
+.hero-inner {
+  grid-template-columns: minmax(0, 1.35fr) minmax(300px, .9fr);
+  gap: 36px;
+}
+
+.hero h1 {
+  font-size: clamp(2rem, 4vw, 3rem);
+}
+
+.hero-actions {
+  margin-top: 24px;
+}
+
+.hero-card {
+  width: 100%;
+  max-width: 520px;
+  justify-self: end;
+  padding: 24px 22px;
+}
+
+.section {
+  padding: 44px 0;
+}
+
+.hero-inner > *,
+.subject-grid > *,
+.dashboard > *,
+.subject-detail > *,
+.split > *,
+.footer-grid > * {
+  min-width: 0;
+}
+
+@media (max-width: 1100px) and (min-width: 821px) {
+  :root {
+    --gutter: 20px;
+  }
+
+  .hero-inner {
+    grid-template-columns: minmax(0, 1.2fr) minmax(280px, .8fr);
+    gap: 24px;
+  }
+
+  .hero-card {
+    max-width: 430px;
+  }
+
+  .subject-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 820px) {
+  :root {
+    --gutter: 18px;
+  }
+
+  .hero {
+    padding: 30px 0 32px;
+  }
+
+  .hero-inner {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+
+  .hero-card {
+    width: 100%;
+    max-width: none;
+    justify-self: stretch;
+  }
+
+  .subject-grid,
+  .dashboard,
+  .subject-detail,
+  .split {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 680px) {
+  :root {
+    --gutter: 16px;
+  }
+
+  .hero {
+    padding: 24px 0 28px;
+  }
+
+  .hero h1 {
+    font-size: clamp(1.9rem, 10vw, 2.6rem);
+  }
+
+  .hero-actions {
+    margin-top: 20px;
+  }
+
+  .hero-actions .btn {
+    flex: 1 1 100%;
+    justify-content: center;
+  }
+
+  .subject-grid,
+  .dashboard,
+  .subject-detail,
+  .split,
+  .quick-list,
+  .link-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .section {
+    padding: 36px 0;
+  }
+}
+
 </style>
 </head>
 <body>
