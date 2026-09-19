@@ -2,6 +2,8 @@ const CONFIG = Object.freeze({
   SPREADSHEET_ID: '1wBbHFPPMcg2KptX-DBKmCdBBs7RKJukhUpJGDl1iWrU',
   ADMIN_EMAIL: 'teacher.hsieh@gmail.com',
   TIMEZONE: 'Asia/Taipei',
+  PUBLIC_CACHE_SECONDS: 60,
+  PUBLIC_SCHEMA_VERSION: 1,
   SHEETS: {
     TODAY: 'today_learning',
     NEWS: 'news',
@@ -9,13 +11,120 @@ const CONFIG = Object.freeze({
   }
 });
 
-function doGet() {
+function doGet(e) {
+  const params = (e && e.parameter) || {};
+
+  if (params.api === 'public') {
+    return publicApiResponse_(params);
+  }
+
   const template = HtmlService.createTemplateFromFile('Index');
   template.initialUser = JSON.stringify(getCurrentUser_());
   return template
     .evaluate()
     .setTitle('大南老邦教學網｜後台管理')
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.DEFAULT);
+}
+
+function publicApiResponse_(params) {
+  try {
+    const payload = getPublicData_();
+    const json = JSON.stringify(payload);
+    const callback = String((params && params.callback) || '').trim();
+
+    if (callback && /^[A-Za-z_$][0-9A-Za-z_$\.]*$/.test(callback)) {
+      return ContentService
+        .createTextOutput(callback + '(' + json + ');')
+        .setMimeType(ContentService.MimeType.JAVASCRIPT);
+    }
+
+    return ContentService
+      .createTextOutput(json)
+      .setMimeType(ContentService.MimeType.JSON);
+  } catch (error) {
+    return ContentService
+      .createTextOutput(JSON.stringify({
+        ok: false,
+        error: String(error && error.message ? error.message : error),
+        generatedAt: Utilities.formatDate(new Date(), CONFIG.TIMEZONE, 'yyyy-MM-dd HH:mm:ss')
+      }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+function getPublicData_() {
+  const cache = CacheService.getScriptCache();
+  const cacheKey = 'public-home-v' + CONFIG.PUBLIC_SCHEMA_VERSION;
+  const cached = cache.get(cacheKey);
+  if (cached) return JSON.parse(cached);
+
+  const todayRows = readTable_(CONFIG.SHEETS.TODAY)
+    .filter(row => toBool_(row.visible))
+    .map(row => ({
+      id: String(row.id || ''),
+      date: String(row.date || ''),
+      period: String(row.period || ''),
+      subject: String(row.subject || ''),
+      title: String(row.title || ''),
+      href: String(row.href || ''),
+      sort_order: Number(row.sort_order || 0)
+    }));
+
+  const news = readTable_(CONFIG.SHEETS.NEWS)
+    .filter(row => toBool_(row.visible))
+    .map(row => ({
+      id: String(row.id || ''),
+      date: String(row.date || ''),
+      tag: String(row.tag || ''),
+      title: String(row.title || ''),
+      href: String(row.href || ''),
+      sort_order: Number(row.sort_order || 0)
+    }));
+
+  const links = readTable_(CONFIG.SHEETS.LINKS)
+    .filter(row => toBool_(row.visible))
+    .map(row => ({
+      id: String(row.id || ''),
+      name: String(row.name || ''),
+      icon: String(row.icon || ''),
+      url: String(row.url || ''),
+      requiresLogin: toBool_(row.requires_login),
+      sort_order: Number(row.sort_order || 0)
+    }));
+
+  const currentDate = todayRows.length ? todayRows[0].date : '';
+  const payload = {
+    ok: true,
+    schemaVersion: CONFIG.PUBLIC_SCHEMA_VERSION,
+    generatedAt: Utilities.formatDate(new Date(), CONFIG.TIMEZONE, 'yyyy-MM-dd HH:mm:ss'),
+    today: {
+      date: currentDate,
+      dateLabel: formatDateLabel_(currentDate),
+      courses: todayRows
+    },
+    news: news,
+    quickLinks: links
+  };
+
+  cache.put(cacheKey, JSON.stringify(payload), CONFIG.PUBLIC_CACHE_SECONDS);
+  return payload;
+}
+
+function clearPublicCache_() {
+  CacheService.getScriptCache().remove('public-home-v' + CONFIG.PUBLIC_SCHEMA_VERSION);
+}
+
+function formatDateLabel_(isoDate) {
+  const match = String(isoDate || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return String(isoDate || '');
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const d = new Date(year, month - 1, day);
+  const weekday = ['日', '一', '二', '三', '四', '五', '六'][d.getDay()];
+
+  return year + ' 年 ' + month + ' 月 ' + day + ' 日（' + weekday + '）';
 }
 
 function getBootstrapData() {
@@ -48,6 +157,8 @@ function saveRow(entity, payload) {
     sheet.appendRow(rowValues);
   }
 
+  clearPublicCache_();
+
   return {
     ok: true,
     row: record,
@@ -68,6 +179,7 @@ function deleteRow(entity, id) {
   for (let r = 1; r < values.length; r++) {
     if (String(values[r][idIndex]) === String(id)) {
       sheet.deleteRow(r + 1);
+      clearPublicCache_();
       return { ok: true, rows: readTable_(def.sheet) };
     }
   }
@@ -91,6 +203,7 @@ function toggleVisible(entity, id, visible) {
         sheet.getRange(r + 1, updatedIndex + 1)
           .setValue(Utilities.formatDate(new Date(), CONFIG.TIMEZONE, 'yyyy-MM-dd HH:mm:ss'));
       }
+      clearPublicCache_();
       return { ok: true, rows: readTable_(def.sheet) };
     }
   }
@@ -112,7 +225,7 @@ function getCurrentUser_() {
 function assertAdmin_() {
   const user = getCurrentUser_();
   if (!user.email) {
-    throw new Error('無法取得 Google 帳號。請確認 Web App 設定為「執行身分：存取網頁應用程式的使用者」。');
+    throw new Error('無法取得 Google 帳號。請確認管理後台部署為「執行身分：存取網頁應用程式的使用者」。');
   }
   if (!user.authorized) {
     throw new Error('此帳號沒有後台權限：' + user.email);
