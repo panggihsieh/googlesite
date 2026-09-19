@@ -8,3 +8,6 @@ desktop.ini
 .env
 .vercel
 node_modules/
+
+# 本機設計參考圖（僅保留在本機，不進版控）
+/plan/
