@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>大南老邦教學網｜後台管理</title>
+  <style>
+    :root{
+      --navy:#17395f;--navy2:#102b49;--blue:#2878df;--blue-soft:#edf5ff;
+      --green:#168b63;--green-soft:#edf9f4;--red:#d9485f;--red-soft:#fff0f3;
+      --ink:#17324d;--muted:#75879a;--line:#e2ebf3;--bg:#f5f8fb;--card:#fff;
+      --radius:18px;--shadow:0 10px 28px rgba(30,61,90,.08);
+      --font:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+    }
+    *{box-sizing:border-box}body{margin:0;font-family:var(--font);background:var(--bg);color:var(--ink)}
+    button,input,select{font:inherit}.hidden{display:none!important}
+    .auth{min-height:100vh;display:grid;place-items:center;padding:28px;background:
+      linear-gradient(180deg,#dff3ff 0%,#edf9f6 65%,#d7f0d0 100%)}
+    .login-card{width:min(440px,94vw);background:#fff;border:1px solid #dce8f2;border-radius:22px;
+      box-shadow:var(--shadow);padding:32px;text-align:center}
+    .logo{font-size:2rem;font-weight:900;color:var(--navy);letter-spacing:.03em}.sub{color:var(--muted);margin:6px 0 22px}
+    .user-box{padding:14px;border-radius:14px;background:#f7fbff;border:1px solid var(--line);text-align:left}
+    .btn{border:0;border-radius:12px;padding:11px 16px;font-weight:800;cursor:pointer}
+    .btn-primary{background:var(--blue);color:#fff}.btn-danger{background:#fff0f1;color:#c9364f;border:1px solid #ffd3da}
+    .btn-ghost{background:#fff;border:1px solid var(--line);color:var(--ink)}
+    .app{min-height:100vh;display:grid;grid-template-columns:240px 1fr}
+    .sidebar{background:linear-gradient(180deg,#17395f,#102b49);color:#dce9f7;padding:22px 14px;position:sticky;top:0;height:100vh}
+    .brand{padding:0 10px 22px;border-bottom:1px solid rgba(255,255,255,.12);font-weight:900;font-size:1.15rem}
+    .nav{display:grid;gap:6px;margin-top:18px}.nav button{width:100%;text-align:left;padding:12px 14px;border:0;border-radius:10px;
+      color:#d7e4f1;background:transparent;cursor:pointer;font-weight:700}.nav button.active,.nav button:hover{background:#2878df;color:#fff}
+    .main{padding:26px}.topbar{display:flex;justify-content:space-between;align-items:center;gap:20px;margin-bottom:22px}
+    .topbar h1{margin:0;font-size:1.55rem}.email{color:var(--muted);font-size:.9rem}
+    .summary{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:22px}
+    .summary-card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px}
+    .summary-card b{font-size:2rem}.blue{color:#266ed2}.green{color:#168b63}.red{color:#d9485f}
+    .panel{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
+    .panel-head{display:flex;justify-content:space-between;align-items:center;padding:18px 20px;border-bottom:1px solid var(--line)}
+    .panel-head h2{margin:0;font-size:1.2rem}.table-wrap{overflow:auto}.table{width:100%;border-collapse:collapse;min-width:760px}
+    th,td{padding:12px 14px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
+    th{font-size:.82rem;color:var(--muted);background:#fbfdff}.toggle{accent-color:var(--blue);width:18px;height:18px}
+    .actions{display:flex;gap:7px}.icon-btn{border:1px solid var(--line);background:#fff;border-radius:9px;padding:7px 9px;cursor:pointer}
+    .fab{display:flex;gap:8px}.modal-backdrop{position:fixed;inset:0;background:rgba(8,25,42,.48);display:grid;place-items:center;padding:20px}
+    .modal{width:min(600px,96vw);max-height:88vh;overflow:auto;background:#fff;border-radius:20px;padding:22px;box-shadow:0 24px 70px rgba(0,0,0,.22)}
+    .modal h3{margin:0 0 18px}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.field{display:grid;gap:6px}
+    .field.full{grid-column:1/-1}.field label{font-size:.82rem;color:var(--muted);font-weight:700}
+    .field input,.field select{width:100%;padding:11px 12px;border:1px solid #cfdae5;border-radius:10px;outline:none}
+    .modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px}
+    .notice{padding:12px 14px;border-radius:12px;margin-bottom:16px;background:#fff8e8;color:#72550a;border:1px solid #f4dfaa}
+    .error{background:#fff0f3;color:#a92f42;border-color:#ffd4dc}
+    @media(max-width:900px){.app{grid-template-columns:1fr}.sidebar{height:auto;position:static}.nav{grid-template-columns:repeat(4,1fr)}.summary{grid-template-columns:1fr}.main{padding:16px}}
+    @media(max-width:620px){.nav{grid-template-columns:1fr 1fr}.form-grid{grid-template-columns:1fr}.field.full{grid-column:auto}}
+  </style>
+</head>
+<body>
+  <section id="auth" class="auth hidden">
+    <div class="login-card">
+      <div class="logo">🌿 大南老邦教學網</div>
+      <div class="sub">後台管理系統</div>
+      <div id="authMessage" class="notice"></div>
+      <div class="user-box">
+        <strong>目前 Google 帳號</strong>
+        <div id="authEmail">讀取中…</div>
+      </div>
+      <p class="sub">允許管理帳號：teacher.hsieh@gmail.com</p>
+      <button class="btn btn-primary" onclick="location.reload()">重新檢查登入</button>
+    </div>
+  </section>
+
+  <div id="app" class="app hidden">
+    <aside class="sidebar">
+      <div class="brand">🌿 大南老邦教學網<br><small>後台管理系統</small></div>
+      <div class="nav">
+        <button data-view="dashboard" class="active" onclick="showView('dashboard',this)">🏠 首頁儀表板</button>
+        <button data-view="today" onclick="showView('today',this)">📘 今日學習</button>
+        <button data-view="news" onclick="showView('news',this)">📢 最新消息</button>
+        <button data-view="links" onclick="showView('links',this)">🔗 快速連結</button>
+      </div>
+    </aside>
+
+    <main class="main">
+      <div class="topbar">
+        <div><h1 id="pageTitle">首頁儀表板</h1><div class="email" id="userEmail"></div></div>
+        <button class="btn btn-ghost" onclick="location.reload()">重新整理</button>
+      </div>
+
+      <div id="status"></div>
+
+      <section id="view-dashboard">
+        <div class="summary">
+          <div class="summary-card"><div>📘 今日學習</div><b id="countToday" class="blue">0</b><div>筆課程資料</div></div>
+          <div class="summary-card"><div>📢 最新消息</div><b id="countNews" class="green">0</b><div>筆公告資料</div></div>
+          <div class="summary-card"><div>🔗 快速連結</div><b id="countLinks" class="red">0</b><div>筆連結資料</div></div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><h2>快速操作</h2></div>
+          <div style="padding:20px;display:flex;gap:12px;flex-wrap:wrap">
+            <button class="btn btn-primary" onclick="openCreate('today')">＋ 新增今日學習</button>
+            <button class="btn btn-primary" onclick="openCreate('news')">＋ 新增最新消息</button>
+            <button class="btn btn-primary" onclick="openCreate('links')">＋ 新增快速連結</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="view-today" class="hidden"></section>
+      <section id="view-news" class="hidden"></section>
+      <section id="view-links" class="hidden"></section>
+    </main>
+  </div>
+
+  <div id="modalRoot"></div>
+
+<script>
+const INITIAL_USER = <?!= initialUser ?>;
+const state = { user: INITIAL_USER, today: [], news: [], links: [] };
+
+document.addEventListener('DOMContentLoaded', init);
+
+function init(){
+  if(!state.user || !state.user.authorized){
+    document.getElementById('auth').classList.remove('hidden');
+    document.getElementById('authEmail').textContent = state.user?.email || '無法取得帳號';
+    const m = document.getElementById('authMessage');
+    m.textContent = state.user?.email
+      ? '此 Google 帳號沒有後台權限。'
+      : '尚未取得登入帳號。請使用 Google 帳號開啟此 Web App。';
+    m.classList.add('error');
+    return;
+  }
+  document.getElementById('app').classList.remove('hidden');
+  document.getElementById('userEmail').textContent = state.user.email;
+  loadData();
+}
+
+function loadData(){
+  setStatus('正在讀取 Google Sheet…');
+  google.script.run
+    .withSuccessHandler(data=>{
+      Object.assign(state,data);
+      setStatus('');
+      renderAll();
+    })
+    .withFailureHandler(showError)
+    .getBootstrapData();
+}
+
+function renderAll(){
+  document.getElementById('countToday').textContent = state.today.length;
+  document.getElementById('countNews').textContent = state.news.length;
+  document.getElementById('countLinks').textContent = state.links.length;
+  renderTable('today');
+  renderTable('news');
+  renderTable('links');
+}
+
+function showView(name,btn){
+  ['dashboard','today','news','links'].forEach(v=>{
+    document.getElementById('view-'+v).classList.toggle('hidden',v!==name);
+  });
+  document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  document.getElementById('pageTitle').textContent =
+    ({dashboard:'首頁儀表板',today:'今日學習管理',news:'最新消息管理',links:'快速連結管理'})[name];
+}
+
+function renderTable(entity){
+  const config = tableConfig(entity);
+  const rows = state[entity] || [];
+  const html = `
+    <div class="panel">
+      <div class="panel-head">
+        <h2>${config.title}</h2>
+        <div class="fab"><button class="btn btn-primary" onclick="openCreate('${entity}')">＋ 新增</button></div>
+      </div>
+      <div class="table-wrap">
+        <table class="table">
+          <thead><tr>${config.columns.map(c=>'<th>'+c.label+'</th>').join('')}<th>顯示</th><th>操作</th></tr></thead>
+          <tbody>
+          ${rows.map(r=>`<tr>
+            ${config.columns.map(c=>'<td>'+escapeHtml(r[c.key] ?? '')+'</td>').join('')}
+            <td><input class="toggle" type="checkbox" ${truthy(r.visible)?'checked':''} onchange="setVisible('${entity}','${r.id}',this.checked)"></td>
+            <td><div class="actions">
+              <button class="icon-btn" onclick="openEdit('${entity}','${r.id}')">✏️</button>
+              <button class="icon-btn" onclick="removeRow('${entity}','${r.id}')">🗑️</button>
+            </div></td>
+          </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>`;
+  document.getElementById('view-'+entity).innerHTML = html;
+}
+
+function tableConfig(entity){
+  if(entity==='today') return {title:'今日學習',columns:[
+    {key:'period',label:'節次'},{key:'subject',label:'領域'},{key:'title',label:'課程名稱'},{key:'date',label:'日期'}
+  ]};
+  if(entity==='news') return {title:'最新消息',columns:[
+    {key:'date',label:'日期'},{key:'title',label:'標題'},{key:'tag',label:'分類'}
+  ]};
+  return {title:'快速連結',columns:[
+    {key:'icon',label:'圖示'},{key:'name',label:'名稱'},{key:'url',label:'網址'},{key:'requires_login',label:'登入'}
+  ]};
+}
+
+function openCreate(entity){ openForm(entity,{}); }
+function openEdit(entity,id){
+  const row=(state[entity]||[]).find(x=>String(x.id)===String(id));
+  openForm(entity,row||{});
+}
+
+function openForm(entity,row){
+  const fields = formFields(entity,row);
+  document.getElementById('modalRoot').innerHTML = `
+    <div class="modal-backdrop" onclick="if(event.target===this)closeModal()">
+      <div class="modal">
+        <h3>${row.id?'編輯':'新增'} ${tableConfig(entity).title}</h3>
+        <form id="editForm" onsubmit="submitForm(event,'${entity}')">
+          <input type="hidden" name="id" value="${escapeAttr(row.id||'')}">
+          <div class="form-grid">${fields}</div>
+          <div class="modal-actions">
+            <button type="button" class="btn btn-ghost" onclick="closeModal()">取消</button>
+            <button class="btn btn-primary">儲存</button>
+          </div>
+        </form>
+      </div>
+    </div>`;
+}
+
+function formFields(entity,r){
+  const input=(name,label,value='',type='text',full=false)=>`
+    <div class="field ${full?'full':''}"><label>${label}</label>
+      <input name="${name}" type="${type}" value="${escapeAttr(value??'')}" required>
+    </div>`;
+  const check=(name,label,value)=>`
+    <div class="field"><label>${label}</label>
+      <select name="${name}"><option value="true" ${truthy(value)?'selected':''}>是</option><option value="false" ${!truthy(value)?'selected':''}>否</option></select>
+    </div>`;
+
+  if(entity==='today') return [
+    input('date','日期',r.date||todayIso(),'date'),
+    input('period','節次',r.period||'第一節'),
+    input('subject','領域',r.subject||''),
+    input('sort_order','排序',r.sort_order||1,'number'),
+    input('title','課程名稱',r.title||'','text',true),
+    input('href','連結',r.href||'','text',true),
+    check('visible','顯示',r.visible!==false)
+  ].join('');
+
+  if(entity==='news') return [
+    input('date','日期',r.date||todayMd()),
+    input('tag','分類',r.tag||'公告'),
+    input('sort_order','排序',r.sort_order||1,'number'),
+    check('visible','顯示',r.visible!==false),
+    input('title','標題',r.title||'','text',true),
+    input('href','連結',r.href||'','text',true)
+  ].join('');
+
+  return [
+    input('name','名稱',r.name||''),
+    input('icon','圖示',r.icon||'🔗'),
+    input('url','網址',r.url||'https://','url',true),
+    input('sort_order','排序',r.sort_order||1,'number'),
+    check('requires_login','需要登入',r.requires_login),
+    check('visible','顯示',r.visible!==false)
+  ].join('');
+}
+
+function submitForm(e,entity){
+  e.preventDefault();
+  const form=new FormData(e.target);
+  const payload={};
+  form.forEach((v,k)=>payload[k]=v);
+  setStatus('儲存中…');
+  google.script.run.withSuccessHandler(res=>{
+    state[entity]=res.rows;
+    closeModal(); renderAll(); setStatus('已儲存');
+    setTimeout(()=>setStatus(''),1200);
+  }).withFailureHandler(showError).saveRow(entity,payload);
+}
+
+function removeRow(entity,id){
+  if(!confirm('確定刪除此筆資料？')) return;
+  google.script.run.withSuccessHandler(res=>{
+    state[entity]=res.rows; renderAll();
+  }).withFailureHandler(showError).deleteRow(entity,id);
+}
+
+function setVisible(entity,id,visible){
+  google.script.run.withSuccessHandler(res=>{
+    state[entity]=res.rows; renderAll();
+  }).withFailureHandler(showError).toggleVisible(entity,id,visible);
+}
+
+function closeModal(){ document.getElementById('modalRoot').innerHTML=''; }
+function setStatus(msg){ document.getElementById('status').innerHTML=msg?'<div class="notice">'+escapeHtml(msg)+'</div>':''; }
+function showError(err){ setStatus('錯誤：'+(err?.message||err)); document.querySelector('#status .notice')?.classList.add('error'); }
+function truthy(v){return v===true||v==='true'||v===1||v==='1'}
+function escapeHtml(v){return String(v).replace(/[&<>"']/g,s=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]))}
+function escapeAttr(v){return escapeHtml(v)}
+function todayIso(){return new Date().toISOString().slice(0,10)}
+function todayMd(){const d=new Date();return String(d.getMonth()+1).padStart(2,'0')+'/'+String(d.getDate()).padStart(2,'0')}
+</script>
+</body>
+</html>
