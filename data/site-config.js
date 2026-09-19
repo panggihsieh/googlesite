@@ -1,0 +1,13 @@
+/* 大南老邦教學網：網站基本資料
+ * 日後修改網站名稱、標語、Hero 文案，主要改這個檔案。
+ */
+window.DANA_SITE_CONFIG = {
+  name: "大南老邦教學網",
+  school: "大南國小",
+  schoolEn: "Da-Nan Elementary School",
+  grade: "高年級數位學習",
+  heroTitle: "學習 × 探究 ×",
+  heroLead: "大南國小高年級數位學習 × AI × 探究實作",
+  keywords: ["閱讀世界", "探索自然", "擁抱科技", "創造未來"],
+  updated: "2026-09-19"
+};
