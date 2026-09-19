@@ -13,7 +13,7 @@ window.DANA_SITE_CONFIG = {
   /* 建立 GAS「公開資料 API」第二個 Web App 部署後，
    * 將 /exec 網址貼到這裡。未設定時使用 data/*.js 靜態備援資料。
    */
-  publicApiUrl: "",
+  publicApiUrl: "https://script.google.com/macros/s/AKfycbz2iBSQqlYOeNbuOrDp72FdzFhBhJEk6QocNep7uwkZrN9amNymcU4ENbFkSWd2PjUo/exec",
   apiTimeoutMs: 8000,
 
   updated: "2026-09-19"
