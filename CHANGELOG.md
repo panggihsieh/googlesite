@@ -1,5 +1,15 @@
 # CHANGELOG — 大南老邦教學網
 
+## 2026-09-19 — GAS 動態資料 API
+
+- GAS `Code.gs` 新增 `?api=public` 唯讀公開資料端點。
+- 公開 API 只回傳 `visible=true` 的「今日學習／最新消息／快速連結」。
+- API 支援 JSON 與 JSONP；GitHub Pages 使用 JSONP 避免跨網域 CORS 問題。
+- 後台新增、修改、刪除、顯示切換時會立即清除公開資料快取。
+- GitHub Pages 首頁改為「靜態資料先顯示 + GAS 最新資料覆寫」模式。
+- 若 GAS API 暫時無法連線，網站會自動保留 GitHub 靜態備援資料。
+- 新增 `DANA_SITE_CONFIG.publicApiUrl` 作為公開 Web App API 網址設定。
+
 ## 2026-09-19 — 首頁橫幅更新
 
 - 將首頁導覽列下方 Hero 改為「學習 × 探究 ×」圖像橫幅。
