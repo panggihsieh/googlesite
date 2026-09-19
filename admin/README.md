@@ -40,3 +40,45 @@ Spreadsheet ID：
 7. 其他帳號應看到「未授權」。
 
 > 重要：如果部署成「以我執行」，`Session.getActiveUser().getEmail()` 可能無法取得訪客 Gmail，白名單驗證會失效。
+
+
+## 第二個部署：公開資料 API
+
+同一個 Apps Script 專案需要建立第二個 Web App 部署，專門讓公開網站讀取資料。
+
+設定：
+
+- 執行身分：**我**
+- 存取權：**任何人**
+- 此部署只使用：
+  - `?api=public`
+  - `?api=public&callback=...`
+
+測試網址：
+
+```text
+<PUBLIC_EXEC_URL>?api=public
+```
+
+正常時應回傳 JSON：
+
+```json
+{
+  "ok": true,
+  "today": { "courses": [] },
+  "news": [],
+  "quickLinks": []
+}
+```
+
+取得公開部署的 `/exec` 網址後，填入：
+
+`data/site-config.js`
+
+的：
+
+```js
+publicApiUrl: "https://script.google.com/macros/s/.../exec"
+```
+
+之後後台儲存資料 → Google Sheet → 公開 API → GitHub Pages / Google Sites 會自動讀取最新內容。
