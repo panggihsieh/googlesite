@@ -1,4 +1,7 @@
-/* 大南老邦教學網 — Google Sites 嵌入首頁渲染 */
+/* 大南老邦教學網 — Google Sites 嵌入首頁渲染
+ * 先顯示 GitHub 內建靜態資料，再嘗試從 GAS 公開 API 取得最新資料。
+ * GAS 採 JSONP，避免 GitHub Pages → Apps Script 的跨網域 CORS 問題。
+ */
 (function () {
   "use strict";
 
@@ -115,12 +118,77 @@
       .join("");
   }
 
-  function init() {
-    renderHero();
-    renderSubjects();
+  function renderDynamicSections() {
     renderToday();
     renderNews();
     renderQuickLinks();
+  }
+
+  function applyRemoteData(remote) {
+    if (!remote || remote.ok !== true) return false;
+
+    if (remote.today) DATA.today = remote.today;
+    if (Array.isArray(remote.news)) DATA.news = remote.news;
+    if (Array.isArray(remote.quickLinks)) DATA.quickLinks = remote.quickLinks;
+
+    renderDynamicSections();
+    document.documentElement.setAttribute("data-live-data", "true");
+    return true;
+  }
+
+  function loadRemoteData() {
+    var apiUrl = String(site.publicApiUrl || "").trim();
+    if (!apiUrl) return;
+
+    var callbackName = "__danaApiCallback_" + Date.now();
+    var script = document.createElement("script");
+    var separator = apiUrl.indexOf("?") >= 0 ? "&" : "?";
+    var timeoutMs = Number(site.apiTimeoutMs || 8000);
+    var done = false;
+
+    function cleanup() {
+      if (script.parentNode) script.parentNode.removeChild(script);
+      try { delete window[callbackName]; }
+      catch (_) { window[callbackName] = undefined; }
+    }
+
+    var timer = setTimeout(function () {
+      if (done) return;
+      done = true;
+      cleanup();
+      console.warn("GAS 公開資料 API 逾時，使用 GitHub 靜態備援資料。");
+    }, timeoutMs);
+
+    window[callbackName] = function (payload) {
+      if (done) return;
+      done = true;
+      clearTimeout(timer);
+      cleanup();
+      if (!applyRemoteData(payload)) {
+        console.warn("GAS 公開資料 API 格式不正確，使用靜態備援資料。");
+      }
+    };
+
+    script.onerror = function () {
+      if (done) return;
+      done = true;
+      clearTimeout(timer);
+      cleanup();
+      console.warn("無法連線 GAS 公開資料 API，使用靜態備援資料。");
+    };
+
+    script.src = apiUrl + separator +
+      "api=public&callback=" + encodeURIComponent(callbackName) +
+      "&_=" + Date.now();
+
+    document.head.appendChild(script);
+  }
+
+  function init() {
+    renderHero();
+    renderSubjects();
+    renderDynamicSections();
+    loadRemoteData();
   }
 
   if (document.readyState === "loading") {
