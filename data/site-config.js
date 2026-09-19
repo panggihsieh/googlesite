@@ -9,5 +9,12 @@ window.DANA_SITE_CONFIG = {
   heroTitle: "學習 × 探究 ×",
   heroLead: "大南國小高年級數位學習 × AI × 探究實作",
   keywords: ["閱讀世界", "探索自然", "擁抱科技", "創造未來"],
+
+  /* 建立 GAS「公開資料 API」第二個 Web App 部署後，
+   * 將 /exec 網址貼到這裡。未設定時使用 data/*.js 靜態備援資料。
+   */
+  publicApiUrl: "",
+  apiTimeoutMs: 8000,
+
   updated: "2026-09-19"
 };
