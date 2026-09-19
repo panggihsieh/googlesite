@@ -703,6 +703,28 @@ button.section-link:hover {
   color: var(--ink-400);
 }
 
+/* 首頁圖像橫幅 */
+.hero-banner {
+  width: 100%;
+  overflow: hidden;
+  background: #eef7fb;
+  border-bottom: 1px solid var(--line);
+}
+
+.hero-banner-image {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+@media (max-width: 700px) {
+  .hero-banner-image {
+    width: 145%;
+    max-width: none;
+    transform: translateX(-2%);
+  }
+}
+
 /* 今日學習 / 最新消息 / 快速連結 */
 .dashboard {
   display: grid;
