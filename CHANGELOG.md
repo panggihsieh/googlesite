@@ -1,5 +1,27 @@
 # CHANGELOG — 大南老邦教學網
 
+## 2026-09-20 — 遠端同步：GAS 部署更新到 version 4（`clasp`）＋ GitHub Pages 公開狀態檢查
+
+> 需求：檢查並開啟 GitHub Pages 正式對外部署（push `main` 讓網站公開），並確認遠端（GitHub Pages ＋ Apps Script）與本機一致
+
+- **GitHub Pages：已啟用且運作正常，未變更任何設定。**
+  - 儲存庫（`panggihsieh/googlesite`）`visibility: public`；Pages `public: true`、`build_type: workflow`、`source: main /`、`https_enforced: true`；workflow `Deploy to GitHub Pages`（`.github/workflows/deploy.yml`）`state: active`。
+  - 本機 `main` 原本落後 `origin/main` **4 個 commit**（`ac0cde9`／`7a1fa82`／`4f32c9a`／`1c283dd`），已 `git pull --ff-only` 快進同步；HEAD `1c283dd` 的最新一次部署結論為 `success`。
+  - 匿名實測：首頁、`index.html`、`script.js`、`style.css`、`data/site-data.js`、`data/site-config.js`、`google-sites-embed.html`、6 個主題頁全部 `200`；`robots.txt`／`sitemap.xml` 仍 `404`（未建立，與檢查清單一致）。線上 `script.js`／`js/embed.js` 已含 `1c283dd`（`site_description`）與 `7a1fa82`（離線時以後台時區算今天）的內容，確認部署是最新版。
+- **GAS（Apps Script）遠端原本落後本機**：公開 API 只回 `schemaVersion 1`，沒有 `serverTime`／`siteLinks`／`settings`，後台畫面也沒有「🔖 後台連結管理」與「⚙️ 後台設定」。已用 `clasp`（3.2.0）同步：
+  - `gas/appsscript.json` 補上遠端才有的 `oauthScopes`（`spreadsheets`、`userinfo.email`）與 `webapp`（`executeAs: USER_DEPLOYING`、`access: ANYONE_ANONYMOUS`）——少了這兩段，`clasp push -f` 會把遠端的公開存取設定覆蓋掉，現在本機 manifest 與遠端完全一致。
+  - `clasp push -f` 推送 `appsscript.json`／`Code.gs`／`Index.html`（clasp 3.x 在非互動環境遇到 manifest 變更會回 `Skipping push.`，必須加 `-f`）。
+  - `clasp deploy -i AKfycbz2…` 把既有 Web App 部署更新到 **version 4**（描述：`2026-09-20 同步 HEAD 1c283dd（後台連結管理／後台設定／serverTime）`）；部署 ID／網址不變，`data/site-config.js` 與兩個 ⚙️ 連結都不需要修改。
+- 環境：本機 `@google/clasp` 3.2.0、已登入 `teacher.hsieh@gmail.com`、`gas/.clasp.json` 的 Project ID 為 `1tggx6LV9vdC3H7fHqJGE5b5Pgbakm14LoMD_2kyTAwvvoIma0d8LO3aB`。
+- 驗證（部署後，匿名＋headless Chrome）：
+  - 部署設定（Apps Script REST API）：`versionNumber 4`、`entryPoint WEB_APP`、`access ANYONE_ANONYMOUS`、`executeAs USER_DEPLOYING`（與部署前相同，沒有被 clasp 改掉）。
+  - 公開 API：`200 application/json`、`ok: true`、`schemaVersion 3`、含 `serverTime`（`2026 年 9 月 20 日（日） 08:13:42`）；`today 1`／`news 4`／`quickLinks 8` 筆、`settings 1` 項。
+  - 後台入口（不帶參數、匿名）：`200`，只有登入畫面（`login-card`），頁面含新版側邊選單但沒有任何課表／消息資料。
+  - 線上頁面（headless Chrome）：首頁、`google-sites-embed.html`、`pages/env.html` 都是 `<html … data-live-time="true" data-live-data="true">`，代表前端確實吃到新版後台（後台時間／後台資料覆寫生效）。
+- 語法檢查：`node --check` 通過 — `script.js`、`js/embed.js`、`js/backend.js`、`data/site-data.js`、`data/site-config.js`；`gas/Code.gs`（Node 不認 `.gs`，複製成 `.js` 後）與 `gas/Index.html` 的內嵌 script（`<?!= … ?>` 樣板標記換成 `null` 後）也都通過；`gas/appsscript.json` 以 `ConvertFrom-Json` 驗證格式。
+- 文件：CHANGELOG（本筆）、`PUBLIC-ACCESS-CHECKLIST.md`（對應版本與檢查紀錄）、`admin/README.md`（clasp 章節補上 manifest／`-f` 注意事項與踩坑）、`PROJECT.md`（§4 結構與 §11 新增「遠端部署同步（clasp）」）、`README.md`（對照表補一列）。
+
+
 ## 2026-09-20 — 後台設定新增欄位「網站描述」（頁尾說明）
 
 > 需求：後台新增「網站描述」輸入欄位，控制頁尾第二段（學校與年級下方）的說明文字；原本是 `data/site-data.js` 的靜態字串，後台無法編輯。

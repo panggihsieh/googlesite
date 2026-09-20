@@ -61,10 +61,12 @@ googlesite/
 │  ├─ tasks.html
 │  └─ works.html
 │
-├─ gas/                  # Apps Script 後台（貼到 script.google.com 的專案）
+├─ gas/                  # Apps Script 後台（可用 clasp 從 repo 同步，見 admin/README.md）
 │  ├─ Code.gs            # 白名單、Sheet CRUD、公開資料 API、後台時間
 │  ├─ Index.html         # 後台管理畫面（依 admin.png 設計圖）
-│  └─ appsscript.json
+│  ├─ appsscript.json    # manifest（oauthScopes 與 webapp 的公開存取設定，不可刪）
+│  ├─ .clasp.json        # clasp 專案設定（只有 Project ID）
+│  └─ .claspignore
 │
 ├─ admin/
 │  └─ README.md          # 後台部署與維護說明
@@ -181,4 +183,12 @@ GitHub push 後，Google Sites 會自動載入新版。
 - 前台使用後台時間的位置：「今日學習」面板日期、頁尾年份、「最後更新（後台時間）」。
 - 後台管理（`gas/Index.html`）：新增／編輯表單的日期預設值呼叫 `getServerTime()`，標題列也會顯示後台時間。
 - 舊版 GAS 沒有 `serverTime` 時，`js/backend.js` 會退回解析 `generatedAt`，功能不會中斷；連後台都連不上時才用裝置時間。
+
+### 遠端部署同步（clasp）
+
+- GAS 的程式以 repo 為唯一來源：`gas/Code.gs`、`gas/Index.html`、`gas/appsscript.json` 用 `clasp push -f` 推到 Apps Script，再以 `clasp deploy -i AKfycbz2…` 更新既有 Web App 部署（部署 ID 與網址不變，前端不用改）。
+- `gas/appsscript.json` 的 `webapp`（`executeAs: USER_DEPLOYING`、`access: ANYONE_ANONYMOUS`）與 `oauthScopes` 必須保留，否則更新部署會讓公開資料 API 變成需要登入。
+- GitHub Pages 由 `.github/workflows/deploy.yml` 發佈 `main` 分支，push 後自動部署，不需要手動操作。
+- 步驟、驗證腳本與常見踩坑見 `admin/README.md`「從這個 repo 同步回 Apps Script（clasp）」；公開狀態的檢查方式與紀錄見 `PUBLIC-ACCESS-CHECKLIST.md`。
+- 目前 GAS 部署：`AKfycbz2…` **version 4**（2026-09-20，公開 API `schemaVersion 3`）。
 

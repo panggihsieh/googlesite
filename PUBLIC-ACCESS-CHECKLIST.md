@@ -3,7 +3,7 @@
 本文件記錄「哪些內容應該公開、公開的開關在哪裡、如何用匿名請求驗證」。
 
 最後檢查日期：`2026-09-20`
-對應版本：分支 `main`、commit `cabdb74`（Align homepage shell with new visual navigation）＋工作區變更（後台連結與後台時間同步）
+對應版本：分支 `main`、commit `1c283dd`（頁尾描述可後台編輯，並加入 clasp 同步設定）；GAS 部署 `AKfycbz2…` **version 4**（2026-09-20，公開 API `schemaVersion 3`）
 
 ## 1. 原則
 
@@ -22,7 +22,7 @@
 | 靜態資料 | `https://panggihsieh.github.io/googlesite/data/site-data.js` | 是 | `200` |
 | Google Sites 嵌入頁 | `https://panggihsieh.github.io/googlesite/google-sites-embed.html` | 是 | `200` |
 | Google Sites 網站 | `https://sites.google.com/view/dana-edu/` | 是 | `200`，無「需要存取權」權限牆 |
-| GAS 公開資料 API（同一部署 + `?api=public`） | `https://script.google.com/macros/s/AKfycbz2iBSQqlYOeNbuOrDp72FdzFhBhJEk6QocNep7uwkZrN9amNymcU4ENbFkSWd2PjUo/exec?api=public` | 是 | `200`，`application/json` 且含實際資料 |
+| GAS 公開資料 API（同一部署 + `?api=public`） | `https://script.google.com/macros/s/AKfycbz2iBSQqlYOeNbuOrDp72FdzFhBhJEk6QocNep7uwkZrN9amNymcU4ENbFkSWd2PjUo/exec?api=public` | 是 | `200`，`application/json`、`schemaVersion 3`、含實際資料與 `serverTime`（部署 `AKfycbz2…` version 4） |
 | GAS 後台入口（首頁／嵌入頁 ⚙️，同一部署不帶參數） | `https://script.google.com/macros/s/AKfycbz2iBSQqlYOeNbuOrDp72FdzFhBhJEk6QocNep7uwkZrN9amNymcU4ENbFkSWd2PjUo/exec` | 頁面可開啟／資料否 | 匿名 `200`，但只有登入畫面（標題 `大南老邦教學網｜後台管理`、`login-card`），沒有任何課表／消息／連結資料 |
 | Google Sheet 後台資料庫 | 不對外公開 | 否 | 僅後台經 GAS 讀寫 |
 | `robots.txt` / `sitemap.xml` | — | 選用 | 目前都 `404`（未建立，但也沒有阻擋搜尋引擎） |
@@ -50,6 +50,7 @@
 
 - 位置：script.google.com → 該專案 → `部署` → `管理部署作業`
 - 應為：執行身分 = `我`、存取權 = `任何人`
+- 目前版本：**`version 4`**（2026-09-20，`schemaVersion 3`，含 `serverTime`／`siteLinks`／`settings`）；更新與驗證方式見 `admin/README.md` 的「從這個 repo 同步回 Apps Script（clasp）」
 - 網址設定檔：`data/site-config.js` 的 `publicApiUrl`（逾時 `apiTimeoutMs`）
 - 只提供 `?api=public` 與 `?api=public&callback=...`（JSONP，避開跨網域 CORS）
 - 與後台入口是**同一個部署**，只差 `?api=public`
@@ -137,5 +138,6 @@ $r = Invoke-WebRequest $admin -SkipHttpErrorCheck -TimeoutSec 25 -Headers @{ 'Us
 | 2026-09-20 | 工作區（後台連結＋後台時間同步） | AI 助理（匿名請求＋headless Chrome 實測） | 公開 API `200` 且含資料；`js/backend.js` 以 `serverTime`（舊版則用 `generatedAt`）校正時鐘；首頁／內頁／嵌入頁 headless Chrome 實測 `<html data-live-data="true" data-live-time="true">`、頁尾顯示「（後台時間）」；模擬離線時回退靜態備援且畫面正常 |
 | 2026-09-20 | `7a1fa82` | AI 助理 | 修正 `script.js`／`js/embed.js` 的 `todayMetaLabel()`：JSONP 逾時（無法連上後台）時不再退回 `data/site-data.js` 的開發假日期（例如 `2025 年 8 月 30 日（六）`），改為以 `DANA_SITE_CONFIG.timezoneOffsetMinutes`（Asia/Taipei，固定 480 分鐘）算出裝置時間的「今天」，字串格式與後台同步後的 `BACKEND.dateLabel()` 一致；無論後台是否連得上，「今日學習」面板日期一律顯示為當下 Asia/Taipei 的今天。 |
 | 2026-09-20 | 本工作區 | AI 助理 | 後台新增「網站描述」欄位：`gas/Code.gs` 的 `SETTINGS_FIELDS` 加 `site_description`（group=`頁尾說明`，type=`textarea`）；`script.js` 的 `applySiteSettings()` 在 `SITE[*]` 覆寫後補一段分支，把 `settings.site_description` 寫入 `DATA.footer.note`，`renderFooter()` 自動套用；空值或省略鍵時保留 `data/site-data.js` 的內建文字。 |
+| 2026-09-20 | `1c283dd`＋GAS version 4 | AI 助理（匿名請求＋headless Chrome 實測） | **GitHub Pages 檢查**：`pages.public: true`、`build_type: workflow`（`main` / 根目錄）、`https_enforced: true`、workflow `active`；本機 `main` 落後 4 個 commit 已 `pull --ff-only`；匿名實測首頁／`index.html`／`script.js`／`style.css`／`data/site-data.js`／`data/site-config.js`／嵌入頁／6 個主題頁皆 `200`（`robots.txt`、`sitemap.xml` 為 `404`，未建立）；線上 `script.js`／`js/embed.js` 已含最新 commit 內容。**GAS 遠端同步**：`clasp push -f`（`appsscript.json`／`Code.gs`／`Index.html`）＋`clasp deploy -i AKfycbz2…` 更新到 version 4；公開 API `200 application/json`、`schemaVersion 3`、`serverTime`＝`2026 年 9 月 20 日（日） 08:13:42`、`today 1`／`news 4`／`quickLinks 8` 筆、`settings 1` 項；後台入口匿名 `200` 只有登入畫面；部署 `access=ANYONE_ANONYMOUS`／`executeAs=USER_DEPLOYING` 未變；線上首頁／嵌入頁／`pages/env.html` headless Chrome 皆 `<html … data-live-time="true" data-live-data="true">` |
 
 

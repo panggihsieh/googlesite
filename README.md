@@ -37,7 +37,9 @@ googlesite/
 ├─ gas/
 │  ├─ Code.gs
 │  ├─ Index.html
-│  └─ appsscript.json
+│  ├─ appsscript.json
+│  ├─ .clasp.json        # clasp 專案設定（同步到 Apps Script 用）
+│  └─ .claspignore
 ├─ admin/
 │  └─ README.md
 ├─ assets/
@@ -59,6 +61,7 @@ googlesite/
 | Google Sites 嵌入版外觀 | `css/embed.css` |
 | 嵌入版程式 | `js/embed.js` |
 | 後台管理畫面（登入頁／選單／儀表板／管理頁） | `gas/Index.html`（依設計圖 `admin.png`，新增模組要沿用同一套樣式） |
+| 後台程式推到 Apps Script、更新正式 Web App 部署 | `gas/` ＋ `clasp push -f`／`clasp deploy -i`（步驟見 `admin/README.md`） |
 | 後台資料欄位、白名單、公開資料 API、後台時間 | `gas/Code.gs` |
 | 後台設定可調整的網站資料欄位 | `gas/Code.gs` 的 `SETTINGS_FIELDS` |
 | 完整主題頁內容 | 暫時仍由 `data/site-data.js` 管理 |
