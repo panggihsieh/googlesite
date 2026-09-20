@@ -80,6 +80,62 @@ Spreadsheet ID：
 - 舊的獨立後台部署 `AKfycbxdJ4…` 已失效（匿名 `404`），請勿再使用。
 - 注意：目前是「以我執行」，`Session.getActiveUser().getEmail()` 有可能拿不到訪客帳號，導致後台顯示「尚未取得登入帳號」。若遇到這種情況，請改回下面第一個部署的設定（執行身分＝**存取網頁應用程式的使用者**、存取權＝**擁有 Google 帳號的使用者**），並把 `index.html`、`google-sites-embed.html` 的 ⚙️ 改成該部署網址。
 
+## 從這個 repo 同步回 Apps Script（clasp）
+
+> 以後只要更新 `gas/` 下的三個檔案、`git push` 之後，在本機跑一次 `clasp push` + `clasp deploy -i`，線上後台就會同步成新版本，不用再手動到 Apps Script 編輯器貼程式碼。
+
+**Apps Script Project ID**：`1tggx6LV9vdC3H7fHqJGE5b5Pgbakm14LoMD_2kyTAwvvoIma0d8LO3aB`（已寫進 `gas/.clasp.json`）
+
+**Web App 既有部署 ID**：`AKfycbz2iBSQqlYOeNbuOrDp72FdzFhBhJEk6QocNep7uwkZrN9amNymcU4ENbFkSWd2PjUo`（`clasp deploy -i` 用這個 ID 更新現有部署）
+
+**一次性設定**（PowerShell）
+
+```powershell
+npm install -g @google/clasp   # 沒裝過才需要
+clasp logout                   # 如果之前登入過別的帳號，先清掉
+clasp login                    # 瀏覽器會打開、用 teacher.hsieh@gmail.com 登入
+cd gas
+clasp status                   # 確認連到正確的 Apps Script 專案（會顯示 Project ID 與 rootDir）
+```
+
+**之後每次這個 repo 的 HEAD 更新後，把程式碼推到 Apps Script 並更新部署**
+
+```powershell
+cd gas
+clasp diff                                                     # 看本地與 Apps Script 編輯器差異（可選）
+clasp push                                                     # 把 Code.gs / Index.html / appsscript.json 推到編輯器
+clasp deploy -i AKfycbz2iBSQqlYOeNbuOrDp72FdzFhBhJEk6QocNep7uwkZrN9amNymcU4ENbFkSWd2PjUo -d "2026-09-20 同步 HEAD 4f32c9a"
+```
+
+說明：
+
+- `clasp push` 只覆蓋檔名相同的檔案，不會刪掉 Apps Script 裡其他不相關的檔案。
+- `clasp deploy -i <deploymentId>` 會自動產生一份 immutable 版本，並把那個 **Web App 部署**指向新版本 — 等同「部署 → 管理部署作業 → 編輯（鉛筆）→ 版本：新版本 → 部署」的 CLI 版。
+- `-d` 後面是版本說明文字，方便以後在 Apps Script 部署紀錄裡追溯。
+
+**注意事項**
+
+- `gas/.clasp.json` 已經 commit 到 repo，內容只有 Project ID（非機密）。
+- `gas/appsscript.json` 是 manifest，目前是 `runtimeVersion: V8`、`timeZone: Asia/Taipei`、`exceptionLogging: STACKDRIVER`，與既有部署一致。如果以後 `範圍`/`執行身分` 之類需要改，記得手動同步到 `appsscript.json` 後再 `clasp push`。
+- `clasp push` 上線後會即時影響該專案所有部署的「最新版本」；改為真正生效的部署仍需 `clasp deploy -i`。
+
+**驗證腳本**（部署完跑一次）
+
+```powershell
+curl "https://script.google.com/macros/s/AKfycbz2iBSQqlYOeNbuOrDp72FdzFhBhJEk6QocNep7uwkZrN9amNymcU4ENbFkSWd2PjUo/exec?api=public" | Select-String schemaVersion
+```
+
+應該看到 `schemaVersion 3`（部署更新前是 1）。
+
+**常見踩坑**
+
+| 症狀 | 原因 | 解法 |
+| --- | --- | --- |
+| `clasp push` 報 `Cannot find scriptId in .clasp.json` | `.clasp.json` 缺 scriptId、或被忽略 | 確認 `gas/.clasp.json` 內容、`git check-ignore -v gas/.clasp.json` 應輸出無結果 |
+| `clasp deploy -i <id>` 報 `Permission denied` | 登入的不是這個專案的擁有者 | `clasp logout` 之後用 `teacher.hsieh@gmail.com` 重登 |
+| 部署成功但前端沒改變 | Apps Script 60 秒資料快取、或沒有 deploy 到既有 ID | 等 60 秒再驗；確認 `clasp deploy -i <id>` 那個 `<id>` 是 `AKfycbz2…` |
+| `clasp push` 上傳後編輯器看到亂碼 | `.claspignore` 沒排除文件類，且文件被當成 `*.html` | 確認 `gas/.claspignore` 內有 `**/*.md`，並把 .md 文件放 repo 其他位置 |
+
 以下兩段保留為部署設計參考。
 
 ## 第一個部署：後台管理

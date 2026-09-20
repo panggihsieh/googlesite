@@ -1,5 +1,15 @@
 # CHANGELOG — 大南老邦教學網
 
+## 2026-09-20 — 後台設定新增欄位「網站描述」（頁尾說明）
+
+> 需求：後台新增「網站描述」輸入欄位，控制頁尾第二段（學校與年級下方）的說明文字；原本是 `data/site-data.js` 的靜態字串，後台無法編輯。
+
+- `gas/Code.gs` 的 `SETTINGS_FIELDS` 新增：
+  - `site_description`：label=`網站描述`、group=`頁尾說明`（新分組）、type=`textarea`、placeholder 帶入內建文字、hint 說明「出現在頁尾、學校與年級下方的說明段落；留空時沿用資料檔的內建文字」。
+- `script.js` 的 `applySiteSettings()` 在 `SITE[*]` 覆寫完之後新增一段分支：trim 後非空就把 `settings.site_description` 寫入 `DATA.footer.note`；空值或省略鍵時保留 `data/site-data.js` 的內建 `footer.note`。後面的 `renderFooter()` 讀 `DATA.footer.note`，會一併重新輸出。
+- 後台「後台設定」頁會自動多一個新分組「頁尾說明」與一個 textarea 欄位（由 `SETTINGS_FIELDS` 自動驅動，不需改 `gas/Index.html`）。
+- 文件：CHANGELOG（本筆）、`PUBLIC-ACCESS-CHECKLIST.md` §6 補一筆。
+
 ## 2026-09-20 — 後台設定（輸入欄位）：網站基本資料改由後台管理並同步前台
 
 > 需求（選項 4）：後台以「設定輸入欄位」管理網站基本資料（原本只存在 `data/site-config.js`／`data/site-data.js`，後台改不到）

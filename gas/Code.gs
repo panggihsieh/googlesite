@@ -37,6 +37,7 @@ const SETTINGS_FIELDS = Object.freeze([
   { key: 'grade', label: '年級定位', group: '網站基本資料', placeholder: '高年級數位學習', hint: '頁尾說明' },
   { key: 'tagline', label: '網站標語', group: '網站基本資料', placeholder: '學習 × 探究 × 創造更好的自己', hint: '頁首品牌下方的小字' },
   { key: 'description', label: '網站簡介', group: '網站基本資料', type: 'textarea', placeholder: '大南國小高年級數位學習 × AI × 探究實作', hint: '頁尾說明' },
+  { key: 'site_description', label: '網站描述', group: '頁尾說明', type: 'textarea', placeholder: '本網站以 HTML / CSS / JavaScript 靜態建置，透過 iframe 嵌入 Google Sites。內容由後台（Google Sheet + Apps Script）同步，瀏覽不需要登入。', hint: '出現在頁尾、學校與年級下方的說明段落；留空時沿用資料檔的內建文字' },
   { key: 'hero_title', label: '首頁橫幅標題', group: '首頁橫幅（Hero）', placeholder: '學習 × 探究 ×', hint: 'Google Sites 嵌入版的 Hero 標題' },
   { key: 'hero_lead', label: '首頁橫幅副標', group: '首頁橫幅（Hero）', type: 'textarea', placeholder: '大南國小高年級數位學習 × AI × 探究實作', hint: '嵌入版 Hero 副標' },
   { key: 'keywords', label: '學習關鍵字', group: '首頁橫幅（Hero）', type: 'list', placeholder: '閱讀世界、探索自然、擁抱科技、創造未來', hint: '用「、」或逗號分隔，嵌入版 Hero 會變成一顆顆標籤' }

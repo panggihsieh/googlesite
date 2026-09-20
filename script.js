@@ -828,6 +828,15 @@
       }
     }
 
+    /* 頁尾說明（後台「網站描述」）：寫進 DATA.footer.note，renderFooter 會自動套用；
+     * 留空時仍使用 data/site-data.js 的內建文字，畫面不會壞。 */
+    var footerNote = String(settings.site_description == null ? "" : settings.site_description).trim();
+    if (footerNote) {
+      if (!DATA.footer) DATA.footer = {};
+      DATA.footer.note = footerNote;
+      changed = true;
+    }
+
     if (!changed) return false;
 
     DATA.site = SITE; // 讓其他讀 DATA.site 的地方也拿到後台設定

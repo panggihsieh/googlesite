@@ -1,0 +1,3 @@
+# Apps Script 只收 Code.gs / *.html / appsscript.json，文件不該被推上去
+**/*.md
+.claspignore
