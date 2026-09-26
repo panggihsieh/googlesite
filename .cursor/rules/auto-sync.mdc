@@ -1,4 +1,4 @@
-﻿---
+---
 description: 變更完成後立即 git commit/push，gas/ 異動時同步 clasp push/deploy
 alwaysApply: true
 ---
