@@ -510,24 +510,85 @@
 
   function renderToday() {
     var today = DATA.today || {};
-    var courses = (today.courses || [])
-      .map(function (c) {
-        return (
-          "<li" +
-          courseSubjectStyle(c.subject) +
-          ">" +
-          '<span class="course-subject">' +
-          esc(c.subject) +
-          "</span>" +
-          '<a class="course-title" href="' +
-          esc(link(c.href)) +
-          '">' +
-          esc(c.title) +
-          "</a>" +
-          "</li>"
-        );
-      })
-      .join("");
+    var courses = today.courses || [];
+    var fromCalendar = today.source === "calendar";
+
+    var listHtml = "";
+    if (fromCalendar && courses.length) {
+      /* 當週行程：依日期分組，方便家長掃整週 */
+      var groups = [];
+      var byDate = {};
+      courses.forEach(function (c) {
+        var key = String(c.date || "");
+        if (!byDate[key]) {
+          byDate[key] = [];
+          groups.push(key);
+        }
+        byDate[key].push(c);
+      });
+
+      listHtml = groups
+        .map(function (dateKey) {
+          var items = byDate[dateKey] || [];
+          var head =
+            (items[0] && items[0].dateShort) ||
+            courseDateShort(dateKey);
+          var rows = items
+            .map(function (c) {
+              return (
+                "<li" +
+                courseSubjectStyle(c.subject) +
+                ">" +
+                (c.timeLabel
+                  ? '<span class="course-time">' + esc(c.timeLabel) + "</span>"
+                  : "") +
+                '<span class="course-subject">' +
+                esc(c.subject) +
+                "</span>" +
+                '<a class="course-title" href="' +
+                esc(link(c.href)) +
+                '">' +
+                esc(c.title) +
+                "</a>" +
+                "</li>"
+              );
+            })
+            .join("");
+          return (
+            '<div class="course-day">' +
+            '<p class="course-day-title">' +
+            esc(head) +
+            "</p>" +
+            '<ul class="course-list">' +
+            rows +
+            "</ul>" +
+            "</div>"
+          );
+        })
+        .join("");
+    } else {
+      listHtml =
+        '<ul class="course-list">' +
+        courses
+          .map(function (c) {
+            return (
+              "<li" +
+              courseSubjectStyle(c.subject) +
+              ">" +
+              '<span class="course-subject">' +
+              esc(c.subject) +
+              "</span>" +
+              '<a class="course-title" href="' +
+              esc(link(c.href)) +
+              '">' +
+              esc(c.title) +
+              "</a>" +
+              "</li>"
+            );
+          })
+          .join("") +
+        "</ul>";
+    }
 
     var cta =
       today.cta && today.cta.label
@@ -540,7 +601,10 @@
 
     if (!el("today-panel")) return;
 
-    var meta = todayMetaLabel();
+    var meta = fromCalendar && today.weekRangeLabel
+      ? today.weekRangeLabel
+      : todayMetaLabel();
+    var blockTitle = fromCalendar ? "本週課程（日曆）" : "本週課程";
 
     render(
       "today-panel",
@@ -550,13 +614,22 @@
         meta ? '<span class="panel-meta">' + esc(meta) + "</span>" : ""
       ) +
         '<div class="course-block">' +
-        '<p class="course-block-title">本週課程</p>' +
-        '<ul class="course-list">' +
-        courses +
-        "</ul>" +
+        '<p class="course-block-title">' +
+        esc(blockTitle) +
+        "</p>" +
+        listHtml +
         "</div>" +
         cta
     );
+  }
+
+  /** yyyy-MM-dd → 09/26（五） */
+  function courseDateShort(iso) {
+    var match = String(iso || "").match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (!match) return String(iso || "");
+    var d = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+    var weekday = ["日", "一", "二", "三", "四", "五", "六"][d.getDay()];
+    return match[2] + "/" + match[3] + "（" + weekday + "）";
   }
 
   /* 最新影片顯示數量：後台 settings.videos_limit 可覆寫；留空或無效時用 site-config 預設 3 */
@@ -745,7 +818,7 @@
     if (Array.isArray(remote.editablePages)) DATA.editablePages = remote.editablePages;
     if (remote.pageMeta && typeof remote.pageMeta === "object") {
       DATA.pageMeta = remote.pageMeta;
-      applyPageHero();
+      applyPageMeta();
     }
     if (Array.isArray(remote.quickLinks) && remote.quickLinks.length) {
       DATA.quickLinks = remote.quickLinks.map(function (item) {
@@ -945,14 +1018,36 @@
     return (DATA.pages || {})[PAGE] || {};
   }
 
-  /** 後台 pageMeta 覆寫主題頁副標／簡介 */
-  function applyPageHero() {
+  /** 後台 pageMeta 覆寫主題頁副標／簡介／區塊內容（無覆寫則沿用靜態檔） */
+  function applyPageMeta() {
     var meta = (DATA.pageMeta || {})[PAGE];
     if (!meta) return;
+
     var sub = document.querySelector(".page-hero-sub");
     var intro = document.querySelector(".page-hero-intro");
     if (meta.heroSub && sub) sub.textContent = meta.heroSub;
     if (meta.heroIntro && intro) intro.textContent = meta.heroIntro;
+
+    if (!DATA.pages) DATA.pages = {};
+    var page = DATA.pages[PAGE] || (DATA.pages[PAGE] = {});
+    var changed = false;
+    if (Array.isArray(meta.features) && meta.features.length) {
+      page.features = meta.features;
+      changed = true;
+    }
+    if (Array.isArray(meta.resources) && meta.resources.length) {
+      page.resources = meta.resources;
+      changed = true;
+    }
+    if (Array.isArray(meta.tasks) && meta.tasks.length) {
+      page.tasks = meta.tasks;
+      changed = true;
+    }
+    if (changed) {
+      renderFeatures();
+      renderResources();
+      renderTasks();
+    }
   }
 
   /**
@@ -1130,7 +1225,7 @@
     renderTasks();
     renderGallery();
     renderOtherSubjects();
-    applyPageHero();
+    applyPageMeta();
     renderPageEditEntry();
 
     /* 靜態內容先顯示，再與後台連線更新資料與時間 */

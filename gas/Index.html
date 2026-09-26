@@ -136,6 +136,49 @@
     .field input:focus,.field select:focus,.field textarea:focus{outline:2px solid rgba(40,120,223,.25);border-color:var(--blue)}
     .modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:22px}
 
+    /* ---------- 主題頁預覽編輯（視覺貼近前台內頁） ---------- */
+    .modal.subject-modal{width:min(920px,96vw);padding:0;overflow:hidden;display:flex;flex-direction:column;max-height:92vh}
+    .subject-modal-head{padding:18px 22px 12px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+    .subject-modal-head h3{font-size:1.15rem}
+    .subject-modal-body{overflow:auto;padding:0;flex:1;background:#f7fafc}
+    .subject-modal-foot{padding:14px 22px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;background:#fff}
+    .sp-preview{font-family:var(--font);color:#17324d}
+    .sp-crumb{display:flex;align-items:center;gap:8px;font-size:.84rem;color:#75879a;padding:16px 22px 0}
+    .sp-hero{padding:12px 22px 22px;border-bottom:1px solid #e2ebf3;
+      background:radial-gradient(700px 260px at 8% 0%,rgba(22,139,99,.08),transparent 70%),#f7fafc}
+    .sp-hero-inner{display:flex;align-items:flex-start;gap:16px;--card:#12695b}
+    .sp-icon{display:grid;place-items:center;width:56px;height:56px;flex-shrink:0;border-radius:16px;font-size:1.7rem;
+      background:color-mix(in srgb,var(--card) 12%,#fff);border:1px solid color-mix(in srgb,var(--card) 22%,#fff)}
+    .sp-hero h1{font-size:1.55rem;color:var(--card);margin:0 0 8px}
+    .sp-field{width:100%;padding:8px 10px;border:1px dashed #c5d5e4;border-radius:10px;background:rgba(255,255,255,.85);font:inherit}
+    .sp-field:focus{outline:2px solid rgba(40,120,223,.28);border-style:solid;border-color:var(--blue);background:#fff}
+    .sp-sub{font-weight:700;font-size:.95rem;margin-bottom:8px}
+    .sp-intro{min-height:64px;resize:vertical;line-height:1.6;color:#4a6074;font-size:.92rem}
+    .sp-section{padding:18px 22px}
+    .sp-section.soft{background:#eef5f2}
+    .sp-section-head{margin-bottom:12px}
+    .sp-section-head h2{font-size:1.05rem}
+    .sp-section-head p{margin:4px 0 0;color:var(--muted);font-size:.84rem}
+    .sp-features{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+    .sp-feature{padding:14px;background:#fff;border:1px solid var(--line);border-radius:14px;display:grid;gap:8px;position:relative}
+    .sp-feature .sp-icon-sm{width:40px;height:40px;font-size:1.15rem;border-radius:12px;
+      display:grid;place-items:center;background:#edf5ff;border:1px solid #d5e6f8}
+    .sp-feature input.sp-ico{width:52px;text-align:center;font-size:1.1rem;padding:6px}
+    .sp-row{display:flex;gap:8px;align-items:center}
+    .sp-resources,.sp-tasks{display:grid;gap:10px}
+    .sp-resource,.sp-task{padding:12px 14px;background:#fff;border:1px solid var(--line);border-radius:12px;display:grid;gap:8px;position:relative}
+    .sp-task{border-left:4px solid var(--blue);grid-template-columns:28px 1fr auto;align-items:start}
+    .sp-num{display:grid;place-items:center;width:26px;height:26px;border-radius:999px;background:#edf5ff;color:var(--blue);font-weight:800;font-size:.82rem}
+    .sp-remove{position:absolute;top:8px;right:8px;border:0;background:#fff0f1;color:#c9364f;border-radius:8px;padding:4px 8px;cursor:pointer;font-size:.75rem;font-weight:700}
+    .sp-add{margin-top:10px;border:1px dashed #b7c9da;background:#fff;border-radius:10px;padding:8px 12px;cursor:pointer;font-weight:700;color:var(--blue);font-size:.85rem}
+    .sp-add:hover{border-color:var(--blue);background:var(--blue-soft)}
+    .sp-toggle{display:flex;align-items:center;gap:8px;font-weight:700;font-size:.9rem}
+    .sp-hint{font-size:.8rem;color:var(--muted);margin:0}
+    @media (max-width:720px){
+      .sp-features{grid-template-columns:1fr}
+      .sp-hero-inner{flex-direction:column}
+    }
+
     /* ---------- 後台設定（輸入欄位表單） ---------- */
     .settings-group+.settings-group{margin-top:20px;padding-top:18px;border-top:1px solid var(--line)}
     .settings-group h3{font-size:1rem;margin-bottom:12px}
@@ -317,7 +360,7 @@
               </div>
               <div class="action-card">
                 <span class="title">📝 主題頁編輯狀態</span>
-                <p>勾選主題為「可編輯」後，前台該頁麵包屑旁會出現 ✏️，點了開此後台編輯頁。</p>
+                <p>勾選「可編輯」後前台出現 ✏️；點 ✏️ 開啟預覽式編輯（副標、簡介、學習重點／資源／任務）。</p>
                 <button class="btn btn-primary" type="button" onclick="gotoView('subjects')">📝 前往主題頁編輯</button>
               </div>
               <div class="action-card">
@@ -383,6 +426,146 @@ const SUBJECT_PREVIEW = {
   ai: SITE_HOME + 'pages/ai.html',
   tasks: SITE_HOME + 'pages/tasks.html',
   works: SITE_HOME + 'pages/works.html'
+};
+
+/* 主題色／圖示（與前台 data/site-data.js 對齊，僅供預覽版面） */
+const SUBJECT_THEME = {
+  chinese: { icon: '📖', color: '#d1564f' },
+  math: { icon: '📐', color: '#3b74d1' },
+  env: { icon: '🌿', color: '#2f9367' },
+  ai: { icon: '🤖', color: '#6d5bd0' },
+  tasks: { icon: '📝', color: '#c8791c' },
+  works: { icon: '🎨', color: '#c74f8c' }
+};
+
+/* Sheet 尚無 JSON 時，預覽用靜態預設（與 data/site-data.js 對齊；儲存後改寫 Sheet） */
+const SUBJECT_DEFAULTS = {
+  chinese: {
+    hero_sub: '課文 • 生字 • 成語 • 閱讀理解',
+    hero_intro: '從課文理解到生字成語，搭配閱讀理解的層次提問，把語文基礎打穩，也把話說得更好。',
+    features: [
+      { icon: '📖', title: '課文導讀', desc: '段落大意、寫作手法與作者觀點，五下第 5 課〈高明說話〉重點整理。' },
+      { icon: '✍️', title: '生字詞語', desc: '每課生字筆順、造詞與例句，附生字詞語表的線上測驗。' },
+      { icon: '🀄', title: '成語教室', desc: '依主題分類的成語整理，加上情境填空練習。' },
+      { icon: '🔍', title: '閱讀理解', desc: '從字面理解到推論、批判，四層次提問練習與自我檢核。' }
+    ],
+    resources: [
+      { name: '五下第 5 課 教材講義', desc: '課文、注釋與段落大意', url: '#' },
+      { name: '生字詞語線上測驗', desc: 'Google 表單，共 20 題', url: 'https://docs.google.com/forms/' },
+      { name: '成語學習單', desc: '主題成語 30 則', url: '#' },
+      { name: '閱讀理解練習', desc: '四層次提問共 12 題', url: '#' }
+    ],
+    tasks: [
+      '朗讀第 5 課課文一次，錄音後上傳 Classroom。',
+      '完成本課生字造詞 3 個，並各寫一個句子。',
+      '寫一段 100 字心得：你覺得「高明說話」的重點是什麼？'
+    ]
+  },
+  math: {
+    hero_sub: '概念 • 例題 • 互動練習 • 數學遊戲',
+    hero_intro: '先看懂概念，再跟著例題走一次，接著用 GeoGebra 動手操作，最後用遊戲把練習變成挑戰。',
+    features: [
+      { icon: '🔢', title: '概念講解', desc: '分數除法的意義與算則，用圖形說明「除以分數等於乘以倒數」。' },
+      { icon: '📐', title: '例題示範', desc: '由簡到難的示範例題，逐步拆解計算流程。' },
+      { icon: '🧮', title: '互動練習', desc: '用 GeoGebra 拖拉操作，親眼看見分數除法的結果。' },
+      { icon: '🎲', title: '數學遊戲', desc: '分數心算挑戰與小組競賽，把練習變成遊戲。' }
+    ],
+    resources: [
+      { name: 'GeoGebra 分數除法操作', desc: '互動圖形，可拖拉驗證', url: 'https://www.geogebra.org/' },
+      { name: '因材網 五下數學', desc: '依進度指派自學任務', url: 'https://adl.edu.tw/' },
+      { name: '分數除法練習單', desc: '基礎 20 題 + 進階 10 題', url: '#' },
+      { name: '單位換算表', desc: '長度、面積、體積、容量', url: '#' }
+    ],
+    tasks: [
+      '完成分數除法練習單基礎 20 題，錯誤題目要訂正。',
+      '在 GeoGebra 上操作一題並截圖上傳。',
+      '和同學玩一次分數心算挑戰，記錄成績。'
+    ]
+  },
+  env: {
+    hero_sub: '校園植物 • 生態觀察 • 永續 • 防災',
+    hero_intro: '校園就是最好的自然教室。從認養一棵樹開始，用觀察記錄去認識生態，也在生活中練習永續與防災。',
+    features: [
+      { icon: '🌿', title: '校園植物圖鑑', desc: '校園常見樹木與草花的辨識特徵，含葉形、樹皮與花期。' },
+      { icon: '🔬', title: '生態觀察記錄', desc: '認養一棵樹，記錄一個月的變化與到訪的生物。' },
+      { icon: '♻️', title: '永續行動', desc: '從省水省電、減塑到落葉堆肥，在生活中實踐永續。' },
+      { icon: '⚠️', title: '防災演練', desc: '地震、火災與颱風的避難流程與校園避難地圖。' }
+    ],
+    resources: [
+      { name: '校園樹木辨識表', desc: '20 種校園樹木圖文對照', url: '#' },
+      { name: '生態觀察記錄表', desc: '可列印或於 Google 表單填寫', url: '#' },
+      { name: '臺灣原生植物資料庫', desc: '查詢原生樹種與分布', url: 'https://www.taiwanflora.tw/' },
+      { name: '防災教育網', desc: '地震、颱洪、火災學習資源', url: 'https://disaster.moe.edu.tw/' }
+    ],
+    tasks: [
+      '認養一棵校園樹木，替它拍照並寫下辨識特徵。',
+      '連續四週記錄樹木的變化（葉、花、果實或到訪生物）。',
+      '提出一項可以在班上做到的永續行動並實際執行。'
+    ]
+  },
+  ai: {
+    hero_sub: 'AI 入門 • 程式設計 • 機器人 • 3D 設計',
+    hero_intro: '先理解 AI 能做什麼、不能做什麼，再用 Scratch 寫程式、用 Tinkercad 做 3D 設計，把想法變成作品。',
+    features: [
+      { icon: '🤖', title: 'AI 入門', desc: '什麼是 AI？從圖像辨識談起，理解 AI 的能與不能。' },
+      { icon: '💻', title: '程式設計', desc: '用 Scratch 建立事件、迴圈與變數概念，做出第一個小遊戲。' },
+      { icon: '🧊', title: '3D 設計', desc: '用 Tinkercad 建立立體模型，從名牌到小工具。' },
+      { icon: '🦾', title: '機器人', desc: '感測器、馬達與程式邏輯整合，完成指定任務。' }
+    ],
+    resources: [
+      { name: 'Scratch 線上版', desc: '瀏覽器直接寫程式，免安裝', url: 'https://scratch.mit.edu/' },
+      { name: 'Tinkercad 3D 設計', desc: '線上建模，作品可匯出 STL', url: 'https://www.tinkercad.com/' },
+      { name: 'AI 工具介紹', desc: '圖像辨識與生成式 AI 簡介', url: '#' },
+      { name: '程式設計學習單', desc: 'Scratch 積木對照與任務卡', url: '#' }
+    ],
+    tasks: [
+      '用 Scratch 做一個有 3 個場景的小遊戲，並分享專案連結。',
+      '在 Tinkercad 設計一個名牌（尺寸 6 × 3 × 0.4 公分）。',
+      '在校園裡拍 5 張樹木照片，觀察 AI 辨識的準確度。'
+    ]
+  },
+  tasks: {
+    hero_sub: '作業 • 學習單 • 線上測驗',
+    hero_intro: '所有作業、學習單與線上測驗都集中在這裡。先確認自己完成了哪些，再把還沒補齊的補上。',
+    features: [
+      { icon: '📝', title: '本週作業', desc: '六個主題的本週作業清單，標示截止日與繳交方式。' },
+      { icon: '📄', title: '學習單下載', desc: '國語、數學、環境、AI 各主題學習單，可線上下載列印。' },
+      { icon: '✅', title: '線上測驗', desc: 'Google 表單即時評分，作答後立刻看到解說。' },
+      { icon: '📊', title: '學習進度', desc: '檢核自己的完成度，找出還沒補齊的項目。' }
+    ],
+    resources: [
+      { name: 'Google Classroom', desc: '作業繳交與公告', url: 'https://classroom.google.com/' },
+      { name: '作業繳交表單', desc: '檔案上傳與心得填寫', url: 'https://docs.google.com/forms/' },
+      { name: '學習進度檢核表', desc: '自我檢核六個主題完成度', url: '#' },
+      { name: '學習單專區', desc: '各主題學習單集中下載', url: '#' }
+    ],
+    tasks: [
+      '確認本週各科作業是否都已繳交。',
+      '完成一項線上測驗，並記下答錯的題目。',
+      '在學習進度檢核表上更新自己的完成度。'
+    ]
+  },
+  works: {
+    hero_sub: '作文 • 專題 • 3D 作品 • 作品展示',
+    hero_intro: '把課堂所學變成看得見的作品。每一件作品都附上作者的說明，歡迎觀摩，也歡迎投稿。',
+    features: [
+      { icon: '✏️', title: '作文精選', desc: '各班優良作文與教師回饋，看見文字的力量。' },
+      { icon: '🔎', title: '專題研究', desc: '小組探究成果，從提問、資料蒐集到結論。' },
+      { icon: '🧊', title: '3D 作品', desc: 'Tinkercad 立體模型展示，可下載 STL 檔。' },
+      { icon: '🏆', title: '競賽成果', desc: '校內外競賽與科展的參與紀錄。' }
+    ],
+    resources: [
+      { name: '作品上傳表單', desc: '上傳作品檔案與說明', url: 'https://docs.google.com/forms/' },
+      { name: '作品展示區', desc: '歷年作品線上展覽', url: '#' },
+      { name: '作品撰寫指引', desc: '作品說明該寫哪些重點', url: '#' },
+      { name: '授權說明', desc: '公開展示的授權與同意事項', url: '#' }
+    ],
+    tasks: [
+      '選一件自己的作品，補上 50 字作品說明。',
+      '到展示區觀摩兩件同學的作品，寫下一個優點。',
+      '把作品檔案整理好，上傳到作品上傳表單。'
+    ]
+  }
 };
 
 const state = { user: INITIAL_USER, today: [], calendars: [], videos: [], subjects: [], links: [], siteLinks: [], settings: {}, settingsFields: [], clock: null };
@@ -532,7 +715,7 @@ function renderHelp(){
         <ul class="help-list">
           <li><strong>登入</strong>：本後台以 Google 帳號白名單控管，僅 <strong>teacher.hsieh@gmail.com</strong> 可以進入。</li>
           <li><strong>資料模組</strong>：今日學習、課表日曆、最新影片、<strong>主題頁編輯</strong>（勾選可編輯 → 前台出現 ✏️）、快速連結、後台連結管理。</li>
-          <li><strong>主題頁編輯</strong>：勾選「可編輯」後，前台該主題麵包屑旁會出現 ✏️；點 ✏️ 會開此後台並帶入該主題（網址 <code>?edit=chinese</code>）。可改副標與簡介；學習重點／資源／任務仍可由 GitHub 靜態檔維護。</li>
+          <li><strong>主題頁編輯</strong>：勾選「可編輯」後，前台該主題麵包屑旁會出現 ✏️；點 ✏️ 會開此後台並帶入該主題（網址 <code>?edit=chinese</code>）。編輯畫面是<strong>前台樣式預覽</strong>，可改副標、簡介、學習重點、學習資源與本頁任務；儲存寫入 Sheet，前台會覆寫靜態檔。</li>
           <li><strong>日曆活動標題</strong>：建議寫成「科目｜課程名稱」（例如 <code>國語｜高明說話</code>），前台會拆成科目徽章與標題。</li>
           <li><strong>後台連結管理</strong>：位置選「導覽列」會與網站內建選單合併（同名覆寫、新項目附加在後）；選「頁尾」則會在前台頁尾多一欄「相關連結」（可用「分組」分成多欄）。</li>
           <li><strong>後台設定</strong>：用輸入欄位修改網站名稱、學校、標語、頁尾說明與嵌入版 Hero 文案／關鍵字；欄位留空＝沿用網站內建內容，儲存後同步前台。</li>
@@ -547,13 +730,13 @@ function renderHelp(){
 function tableConfig(entity){
   if(entity==='today') return {
     title:'今日學習管理',
-    hint:'手動課表備援。當天若「課表日曆」有啟用中的行程，前台會優先顯示日曆；日曆沒有行程時才用這裡。',
+    hint:'手動課表備援。當週（星期日～星期六）若「課表日曆」有啟用中的行程，前台「本週課程」會優先顯示日曆；當週沒有行程時才用這裡。',
     toggleLabel:'顯示',
     columns:[{key:'period',label:'節次'},{key:'subject',label:'領域'},{key:'title',label:'課程名稱'},{key:'date',label:'日期'}]
   };
   if(entity==='calendars') return {
     title:'課表日曆管理',
-    hint:'最多 5 組。請貼 Google 日曆「嵌入」網址（…/calendar/embed?src=…）；勾選「啟用」後才會抓當天行程。伺服器會自動轉成公開 iCal。活動標題建議「科目｜課程名稱」。',
+    hint:'最多 5 組。請貼 Google 日曆「嵌入」網址（…/calendar/embed?src=…）；勾選「啟用」後，前台「本週課程」會自動抓取當週（星期日～星期六，台北時間）行程並列出。伺服器會自動轉成公開 iCal。活動標題建議「科目｜課程名稱」。',
     toggleLabel:'啟用',
     columns:[{key:'label',label:'名稱'},{key:'url',label:'日曆網址'},{key:'sort_order',label:'排序'}]
   };
@@ -564,7 +747,7 @@ function tableConfig(entity){
   };
   if(entity==='subjects') return {
     title:'主題頁編輯',
-    hint:'勾選「可編輯」後，前台該主題麵包屑旁會出現 ✏️，點了開此編輯頁。可改副標與簡介。',
+    hint:'勾選「可編輯」後，前台該主題麵包屑旁會出現 ✏️。點 ✏️ 開啟「預覽式編輯」：可改副標、簡介、學習重點、資源與任務。',
     toggleLabel:'可編輯',
     columns:[{key:'label',label:'主題'},{key:'hero_sub',label:'副標'},{key:'hero_intro',label:'簡介'}]
   };
@@ -687,9 +870,13 @@ function openCreate(entity){
 
 function openEdit(entity,id){
   const row = (state[entity]||[]).find(x=>String(x.id)===String(id));
-  if(entity==='subjects' && !row){
-    setStatus('找不到主題：' + id);
-    setTimeout(()=>setStatus(''),1600);
+  if(entity==='subjects'){
+    if(!row){
+      setStatus('找不到主題：' + id);
+      setTimeout(()=>setStatus(''),1600);
+      return;
+    }
+    openSubjectPreview(row);
     return;
   }
   openForm(entity,row||{});
@@ -760,25 +947,8 @@ function formFields(entity,r){
   ].join('');
 
   if(entity==='subjects'){
-    const preview = SUBJECT_PREVIEW[r.id] || SITE_HOME;
-    const optional=(name,label,value='',type='text',full=false)=>`
-      <div class="field ${full?'full':''}"><label>${label}</label>
-        <input name="${name}" type="${type}" value="${escapeAttr(value??'')}">
-      </div>`;
-    const area=(name,label,value='')=>`
-      <div class="field full"><label>${label}</label>
-        <textarea name="${name}" rows="3">${escapeHtml(value??'')}</textarea>
-      </div>`;
-    return [
-      `<div class="field full"><label>主題</label><div><strong>${escapeHtml(r.label||r.id)}</strong> <span class="unit">${escapeHtml(r.id||'')}</span></div>
-        <div class="unit" style="margin-top:6px"><a href="${escapeAttr(preview)}" target="_blank" rel="noopener">開啟前台預覽 ↗</a></div></div>`,
-      check('visible','可編輯（前台顯示 ✏️）',truthy(r.visible)),
-      optional('hero_sub','頁面副標（例如：課文 • 生字 • 成語 • 閱讀理解）',r.hero_sub||'','text',true),
-      area('hero_intro','頁面簡介',r.hero_intro||''),
-      `<input type="hidden" name="label" value="${escapeAttr(r.label||'')}">`,
-      `<input type="hidden" name="href" value="${escapeAttr(r.href||'')}">`,
-      `<input type="hidden" name="sort_order" value="${escapeAttr(r.sort_order||1)}">`
-    ].join('');
+    /* 主題頁改走 openSubjectPreview（預覽式編輯），此分支僅作後備 */
+    return '';
   }
 
   if(entity==='siteLinks') return [
@@ -813,6 +983,206 @@ function submitForm(e,entity){
     closeModal(); renderAll(); setStatus('已儲存');
     setTimeout(()=>setStatus(''),1200);
   }).withFailureHandler(showError).saveRow(entity,payload);
+}
+
+/** 主題頁預覽編輯：視覺貼近前台，欄位嵌在版面內 */
+function openSubjectPreview(row){
+  const id = String(row.id || '');
+  const theme = SUBJECT_THEME[id] || { icon: '📄', color: '#12695b' };
+  const defaults = SUBJECT_DEFAULTS[id] || { features: [], resources: [], tasks: [], hero_sub: '', hero_intro: '' };
+  const preview = SUBJECT_PREVIEW[id] || SITE_HOME;
+  const heroSub = String(row.hero_sub || '').trim() || defaults.hero_sub || '';
+  const heroIntro = String(row.hero_intro || '').trim() || defaults.hero_intro || '';
+  const features = parseLocalJson(row.features_json, 'features') || defaults.features.slice();
+  const resources = parseLocalJson(row.resources_json, 'resources') || defaults.resources.slice();
+  const tasks = parseLocalJson(row.tasks_json, 'tasks') || defaults.tasks.slice();
+
+  document.getElementById('modalRoot').innerHTML = `
+    <div class="modal-backdrop" onclick="if(event.target===this)closeModal()">
+      <div class="modal subject-modal" role="dialog" aria-label="主題頁預覽編輯">
+        <div class="subject-modal-head">
+          <div>
+            <h3>預覽編輯「${escapeHtml(row.label || id)}」</h3>
+            <p class="sp-hint">版面近似前台主題頁；直接在欄位改內容後按儲存。空白區塊儲存後前台會沿用 GitHub 靜態檔。</p>
+          </div>
+          <a class="btn btn-ghost" href="${escapeAttr(preview)}" target="_blank" rel="noopener">前台預覽 ↗</a>
+        </div>
+        <form id="editForm" onsubmit="submitSubjectPreview(event)">
+          <input type="hidden" name="id" value="${escapeAttr(id)}">
+          <input type="hidden" name="label" value="${escapeAttr(row.label||'')}">
+          <input type="hidden" name="href" value="${escapeAttr(row.href||'')}">
+          <input type="hidden" name="sort_order" value="${escapeAttr(row.sort_order||1)}">
+          <input type="hidden" name="features_json" id="subjectFeaturesJson" value="">
+          <input type="hidden" name="resources_json" id="subjectResourcesJson" value="">
+          <input type="hidden" name="tasks_json" id="subjectTasksJson" value="">
+          <div class="subject-modal-body">
+            <div class="sp-preview">
+              <nav class="sp-crumb" aria-label="路徑"><span>首頁</span><span aria-hidden="true">/</span><span>${escapeHtml(row.label||id)}</span></nav>
+              <div class="sp-hero">
+                <div class="sp-hero-inner" style="--card:${escapeAttr(theme.color)}">
+                  <span class="sp-icon" aria-hidden="true">${escapeHtml(theme.icon)}</span>
+                  <div style="flex:1;min-width:0">
+                    <h1>${escapeHtml(row.label||id)}</h1>
+                    <input class="sp-field sp-sub" name="hero_sub" value="${escapeAttr(heroSub)}" placeholder="頁面副標（例如：課文 • 生字 • 成語）" maxlength="200">
+                    <textarea class="sp-field sp-intro" name="hero_intro" rows="3" placeholder="頁面簡介" maxlength="600">${escapeHtml(heroIntro)}</textarea>
+                  </div>
+                </div>
+              </div>
+
+              <section class="sp-section">
+                <header class="sp-section-head"><h2>學習重點</h2><p>本頁核心學習區塊（最多 8 項）</p></header>
+                <div class="sp-features" id="spFeatures">${features.map((f,i)=>featureEditorHtml(f,i)).join('')}</div>
+                <button class="sp-add" type="button" onclick="addSubjectFeature()">＋ 新增學習重點</button>
+              </section>
+
+              <section class="sp-section soft">
+                <header class="sp-section-head"><h2>學習資源</h2><p>名稱、說明與連結（最多 12 項）</p></header>
+                <div class="sp-resources" id="spResources">${resources.map((r,i)=>resourceEditorHtml(r,i)).join('')}</div>
+                <button class="sp-add" type="button" onclick="addSubjectResource()">＋ 新增資源</button>
+              </section>
+
+              <section class="sp-section">
+                <header class="sp-section-head"><h2>本頁任務</h2><p>完成後請於 Google Classroom 繳交（最多 10 項）</p></header>
+                <div class="sp-tasks" id="spTasks">${tasks.map((t,i)=>taskEditorHtml(t,i)).join('')}</div>
+                <button class="sp-add" type="button" onclick="addSubjectTask()">＋ 新增任務</button>
+              </section>
+            </div>
+          </div>
+          <div class="subject-modal-foot">
+            <label class="sp-toggle">
+              <input type="hidden" name="visible" id="subjectVisibleValue" value="${truthy(row.visible)?'true':'false'}">
+              <input class="toggle" type="checkbox" ${truthy(row.visible)?'checked':''} onchange="document.getElementById('subjectVisibleValue').value=this.checked?'true':'false'">
+              可編輯（前台顯示 ✏️）
+            </label>
+            <div class="fab">
+              <button type="button" class="btn btn-ghost" onclick="closeModal()">取消</button>
+              <button class="btn btn-primary">儲存</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>`;
+}
+
+function parseLocalJson(raw, kind){
+  const text = String(raw || '').trim();
+  if(!text) return null;
+  try{
+    const parsed = JSON.parse(text);
+    if(!Array.isArray(parsed) || !parsed.length) return null;
+    if(kind==='features'){
+      return parsed.map(item=>({
+        icon: String((item&&item.icon)||''),
+        title: String((item&&item.title)||''),
+        desc: String((item&&item.desc)||'')
+      }));
+    }
+    if(kind==='resources'){
+      return parsed.map(item=>({
+        name: String((item&&item.name)||''),
+        desc: String((item&&item.desc)||''),
+        url: String((item&&item.url)||'')
+      }));
+    }
+    if(kind==='tasks'){
+      return parsed.map(item=> typeof item==='string' ? item : String((item&&(item.text||item.title))||''));
+    }
+  }catch(err){ /* ignore */ }
+  return null;
+}
+
+function featureEditorHtml(f,i){
+  return `<div class="sp-feature" data-idx="${i}">
+    <button type="button" class="sp-remove" onclick="this.closest('.sp-feature').remove()" title="移除此項">刪除</button>
+    <div class="sp-row">
+      <input class="sp-field sp-ico" data-k="icon" value="${escapeAttr(f.icon||'')}" maxlength="8" aria-label="圖示">
+      <input class="sp-field" data-k="title" value="${escapeAttr(f.title||'')}" placeholder="標題" maxlength="80" style="flex:1">
+    </div>
+    <textarea class="sp-field" data-k="desc" rows="2" placeholder="說明" maxlength="300">${escapeHtml(f.desc||'')}</textarea>
+  </div>`;
+}
+
+function resourceEditorHtml(r,i){
+  return `<div class="sp-resource" data-idx="${i}">
+    <button type="button" class="sp-remove" onclick="this.closest('.sp-resource').remove()" title="移除此項">刪除</button>
+    <input class="sp-field" data-k="name" value="${escapeAttr(r.name||'')}" placeholder="資源名稱" maxlength="120">
+    <input class="sp-field" data-k="desc" value="${escapeAttr(r.desc||'')}" placeholder="簡短說明" maxlength="200">
+    <input class="sp-field" data-k="url" value="${escapeAttr(r.url||'')}" placeholder="連結（https://… 或 #）" maxlength="500">
+  </div>`;
+}
+
+function taskEditorHtml(text,i){
+  return `<div class="sp-task" data-idx="${i}">
+    <span class="sp-num" aria-hidden="true">${Number(i)+1}</span>
+    <textarea class="sp-field" data-k="text" rows="2" placeholder="任務內容" maxlength="400">${escapeHtml(text||'')}</textarea>
+    <button type="button" class="sp-remove" style="position:static" onclick="removeSubjectTask(this)" title="移除此項">刪除</button>
+  </div>`;
+}
+
+function renumberSubjectTasks(){
+  document.querySelectorAll('#spTasks .sp-task .sp-num').forEach((el,i)=>{ el.textContent = String(i+1); });
+}
+
+function removeSubjectTask(btn){
+  const item = btn.closest('.sp-task');
+  if(item) item.remove();
+  renumberSubjectTasks();
+}
+
+function addSubjectFeature(){
+  const host = document.getElementById('spFeatures');
+  if(!host || host.children.length >= 8){ setStatus('學習重點最多 8 項'); setTimeout(()=>setStatus(''),1400); return; }
+  host.insertAdjacentHTML('beforeend', featureEditorHtml({icon:'📌',title:'',desc:''}, host.children.length));
+}
+
+function addSubjectResource(){
+  const host = document.getElementById('spResources');
+  if(!host || host.children.length >= 12){ setStatus('學習資源最多 12 項'); setTimeout(()=>setStatus(''),1400); return; }
+  host.insertAdjacentHTML('beforeend', resourceEditorHtml({name:'',desc:'',url:'#'}, host.children.length));
+}
+
+function addSubjectTask(){
+  const host = document.getElementById('spTasks');
+  if(!host || host.children.length >= 10){ setStatus('本頁任務最多 10 項'); setTimeout(()=>setStatus(''),1400); return; }
+  host.insertAdjacentHTML('beforeend', taskEditorHtml('', host.children.length));
+  renumberSubjectTasks();
+}
+
+function collectSubjectBlocks(){
+  const features = Array.from(document.querySelectorAll('#spFeatures .sp-feature')).map(card=>({
+    icon: (card.querySelector('[data-k="icon"]')||{}).value || '',
+    title: (card.querySelector('[data-k="title"]')||{}).value || '',
+    desc: (card.querySelector('[data-k="desc"]')||{}).value || ''
+  })).filter(f=>String(f.title).trim() || String(f.desc).trim());
+
+  const resources = Array.from(document.querySelectorAll('#spResources .sp-resource')).map(card=>({
+    name: (card.querySelector('[data-k="name"]')||{}).value || '',
+    desc: (card.querySelector('[data-k="desc"]')||{}).value || '',
+    url: (card.querySelector('[data-k="url"]')||{}).value || ''
+  })).filter(r=>String(r.name).trim());
+
+  const tasks = Array.from(document.querySelectorAll('#spTasks .sp-task')).map(card=>{
+    return String((card.querySelector('[data-k="text"]')||{}).value || '').trim();
+  }).filter(Boolean);
+
+  return { features, resources, tasks };
+}
+
+function submitSubjectPreview(e){
+  e.preventDefault();
+  const form = new FormData(e.target);
+  const payload = {};
+  form.forEach((v,k)=>payload[k]=v);
+  const blocks = collectSubjectBlocks();
+  payload.features_json = JSON.stringify(blocks.features);
+  payload.resources_json = JSON.stringify(blocks.resources);
+  payload.tasks_json = JSON.stringify(blocks.tasks);
+  setStatus('儲存中…');
+  google.script.run.withSuccessHandler(res=>{
+    state.subjects=res.rows;
+    closeModal(); renderAll(); setStatus('已儲存');
+    setTimeout(()=>setStatus(''),1200);
+  }).withFailureHandler(showError).saveRow('subjects',payload);
 }
 
 function removeRow(entity,id){

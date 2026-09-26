@@ -3,7 +3,7 @@ const CONFIG = Object.freeze({
   ADMIN_EMAIL: 'teacher.hsieh@gmail.com',
   TIMEZONE: 'Asia/Taipei',
   PUBLIC_CACHE_SECONDS: 60,
-  PUBLIC_SCHEMA_VERSION: 6,
+  PUBLIC_SCHEMA_VERSION: 8,
   /* 今日學習：最多 5 組公開 Google 日曆（後台存 embed 網址；抓課表時在 GAS 轉成 iCal） */
   MAX_CALENDAR_FEEDS: 5,
   DEFAULT_CALENDAR_EMBED_URL: 'https://calendar.google.com/calendar/embed?src=84f9b973e435bd5fba31848b07c46947612682c619a0d6a2847fce36d038130d%40group.calendar.google.com&ctz=Asia%2FTaipei',
@@ -28,7 +28,7 @@ const CONFIG = Object.freeze({
     news: ['id', 'date', 'tag', 'title', 'href', 'visible', 'sort_order', 'updated_at'],
     videos: ['id', 'date', 'title', 'url', 'visible', 'sort_order', 'updated_at'],
     calendar_feeds: ['id', 'label', 'url', 'visible', 'sort_order', 'updated_at'],
-    subject_pages: ['id', 'label', 'href', 'visible', 'hero_sub', 'hero_intro', 'sort_order', 'updated_at'],
+    subject_pages: ['id', 'label', 'href', 'visible', 'hero_sub', 'hero_intro', 'features_json', 'resources_json', 'tasks_json', 'sort_order', 'updated_at'],
     quick_links: ['id', 'name', 'icon', 'url', 'requires_login', 'visible', 'sort_order', 'updated_at'],
     site_links: ['id', 'area', 'group', 'label', 'icon', 'href', 'visible', 'sort_order', 'updated_at'],
     settings: ['key', 'value', 'updated_at']
@@ -160,12 +160,16 @@ function getPublicData_() {
       sort_order: Number(row.sort_order || 0)
     }));
 
-  /* 已啟用的課表日曆（最多 5）：當天有行程則優先於 Sheet */
-  const calendarCourses = loadTodayCoursesFromCalendars_(todayIso);
+  /* 已啟用的課表日曆（最多 5）：當週（日–六）有行程則優先於 Sheet */
+  const weekRange = getWeekRangeSundaySaturday_(todayIso);
+  const calendarCourses = loadWeekCoursesFromCalendars_(weekRange);
   const todayPayload = calendarCourses.length
     ? {
         date: todayIso,
         dateLabel: formatDateLabel_(todayIso),
+        weekStart: weekRange.start,
+        weekEnd: weekRange.end,
+        weekRangeLabel: weekRange.rangeLabel,
         courses: calendarCourses,
         source: 'calendar'
       }
@@ -233,7 +237,7 @@ function getPublicData_() {
     if (value) settings[field.key] = value;
   });
 
-  /* 主題頁：可編輯清單＋副標／簡介覆寫（有填才輸出） */
+  /* 主題頁：可編輯清單＋副標／簡介／區塊覆寫（有填才輸出；前台靜態檔為備援） */
   const subjectRows = ensureSubjectPages_();
   const editablePages = subjectRows
     .filter(row => toBool_(row.visible))
@@ -244,10 +248,16 @@ function getPublicData_() {
     if (!id) return;
     const heroSub = String(row.hero_sub || '').trim();
     const heroIntro = String(row.hero_intro || '').trim();
-    if (!heroSub && !heroIntro) return;
+    const features = parseSubjectJsonArray_(row.features_json, 'features');
+    const resources = parseSubjectJsonArray_(row.resources_json, 'resources');
+    const tasks = parseSubjectJsonArray_(row.tasks_json, 'tasks');
+    if (!heroSub && !heroIntro && !features && !resources && !tasks) return;
     pageMeta[id] = {};
     if (heroSub) pageMeta[id].heroSub = heroSub;
     if (heroIntro) pageMeta[id].heroIntro = heroIntro;
+    if (features) pageMeta[id].features = features;
+    if (resources) pageMeta[id].resources = resources;
+    if (tasks) pageMeta[id].tasks = tasks;
   });
 
   /* 這裡只快取資料（不含時間）；後台時間由 publicApiResponse_ 每次即時加上。 */
@@ -535,8 +545,20 @@ function sortVideosRecent_(rows) {
 
 /* ---------- 課表日曆（最多 5 組 embed／iCal） ---------- */
 
+/** 主題頁工作表：補齊缺少的標題欄（例如 features_json），不更動既有資料 */
+function ensureSubjectPageHeaders_() {
+  const sheet = getSheet_(CONFIG.SHEETS.SUBJECTS);
+  const expected = CONFIG.SHEET_HEADERS.subject_pages;
+  const lastCol = Math.max(sheet.getLastColumn(), 1);
+  const current = sheet.getRange(1, 1, 1, lastCol).getValues()[0].map(String);
+  const missing = expected.filter(h => current.indexOf(h) < 0);
+  if (!missing.length) return;
+  sheet.getRange(1, current.length + 1, 1, current.length + missing.length).setValues([missing]);
+}
+
 /** 主題頁清單：空表時寫入六大主題（預設不可編輯） */
 function ensureSubjectPages_() {
+  ensureSubjectPageHeaders_();
   const rows = readTable_(CONFIG.SHEETS.SUBJECTS);
   const byId = {};
   rows.forEach(row => {
@@ -544,25 +566,70 @@ function ensureSubjectPages_() {
   });
 
   const sheet = getSheet_(CONFIG.SHEETS.SUBJECTS);
+  const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0].map(String);
   const now = Utilities.formatDate(new Date(), CONFIG.TIMEZONE, 'yyyy-MM-dd HH:mm:ss');
   let changed = false;
 
   SUBJECT_PAGE_DEFS.forEach(def => {
     if (byId[def.id]) return;
-    sheet.appendRow([
-      def.id,
-      def.label,
-      def.href,
-      false,
-      '',
-      '',
-      def.sort_order,
-      now
-    ]);
+    const row = headers.map(h => {
+      if (h === 'id') return def.id;
+      if (h === 'label') return def.label;
+      if (h === 'href') return def.href;
+      if (h === 'visible') return false;
+      if (h === 'sort_order') return def.sort_order;
+      if (h === 'updated_at') return now;
+      return '';
+    });
+    sheet.appendRow(row);
     changed = true;
   });
 
   return changed ? readTable_(CONFIG.SHEETS.SUBJECTS) : rows;
+}
+
+/**
+ * 解析主題頁 JSON 欄位。kind＝features｜resources｜tasks。
+ * 無效或空陣列回 null（公開 API 不輸出，前台沿用靜態檔）。
+ */
+function parseSubjectJsonArray_(raw, kind) {
+  const text = String(raw || '').trim();
+  if (!text) return null;
+  let parsed;
+  try {
+    parsed = JSON.parse(text);
+  } catch (err) {
+    return null;
+  }
+  if (!Array.isArray(parsed) || !parsed.length) return null;
+
+  if (kind === 'features') {
+    return parsed.slice(0, 8).map(item => ({
+      icon: String((item && item.icon) || '').trim().slice(0, 8),
+      title: String((item && item.title) || '').trim().slice(0, 80),
+      desc: String((item && item.desc) || '').trim().slice(0, 300)
+    })).filter(item => item.title || item.desc);
+  }
+  if (kind === 'resources') {
+    return parsed.slice(0, 12).map(item => ({
+      name: String((item && item.name) || '').trim().slice(0, 120),
+      desc: String((item && item.desc) || '').trim().slice(0, 200),
+      url: String((item && item.url) || '').trim().slice(0, 500)
+    })).filter(item => item.name);
+  }
+  if (kind === 'tasks') {
+    return parsed.slice(0, 10).map(item => {
+      if (typeof item === 'string') return item.trim().slice(0, 400);
+      return String((item && (item.text || item.title)) || '').trim().slice(0, 400);
+    }).filter(Boolean);
+  }
+  return null;
+}
+
+/** 正規化後寫回 Sheet 的 JSON 字串；空內容回空字串 */
+function stringifySubjectJson_(raw, kind) {
+  const list = parseSubjectJsonArray_(raw, kind);
+  return list ? JSON.stringify(list) : '';
 }
 
 /** 讀取課表日曆；空表時寫入內建預設（embed 網址、已啟用） */
@@ -603,8 +670,54 @@ function toCalendarIcsUrl_(url) {
   return '';
 }
 
-/** 合併所有已啟用日曆中「今天」的行程 → 前台 courses */
-function loadTodayCoursesFromCalendars_(todayIso) {
+/**
+ * 以 todayIso（Asia/Taipei 的 yyyy-MM-dd）算出當週：星期日～星期六。
+ */
+function getWeekRangeSundaySaturday_(todayIso) {
+  const match = String(todayIso || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) {
+    return { start: todayIso, end: todayIso, rangeLabel: String(todayIso || '') };
+  }
+
+  const year = Number(match[1]);
+  const month = Number(match[2]) - 1;
+  const day = Number(match[3]);
+  const probe = new Date(year, month, day);
+  const weekday = probe.getDay(); /* 0＝日 … 6＝六 */
+  const start = new Date(year, month, day - weekday);
+  const end = new Date(year, month, day - weekday + 6);
+
+  const toIso = function (d) {
+    const y = d.getFullYear();
+    const m = d.getMonth() + 1;
+    const dd = d.getDate();
+    return y + '-' + (m < 10 ? '0' : '') + m + '-' + (dd < 10 ? '0' : '') + dd;
+  };
+
+  const startIso = toIso(start);
+  const endIso = toIso(end);
+  return {
+    start: startIso,
+    end: endIso,
+    rangeLabel: shortWeekdayLabel_(startIso) + '–' + shortWeekdayLabel_(endIso)
+  };
+}
+
+/** 09/21（日）這種短標籤 */
+function shortWeekdayLabel_(isoDate) {
+  const match = String(isoDate || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return String(isoDate || '');
+  const d = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+  const weekday = ['日', '一', '二', '三', '四', '五', '六'][d.getDay()];
+  return match[2] + '/' + match[3] + '（' + weekday + '）';
+}
+
+/** 合併所有已啟用日曆中「當週日–六」的行程 → 前台 courses */
+function loadWeekCoursesFromCalendars_(weekRange) {
+  const start = String((weekRange && weekRange.start) || '');
+  const end = String((weekRange && weekRange.end) || '');
+  if (!start || !end) return [];
+
   const feeds = ensureCalendarFeeds_()
     .filter(row => toBool_(row.visible))
     .slice(0, CONFIG.MAX_CALENDAR_FEEDS);
@@ -621,7 +734,7 @@ function loadTodayCoursesFromCalendars_(todayIso) {
       });
       if (response.getResponseCode() >= 400) return;
       parseIcsEvents_(response.getContentText())
-        .filter(ev => ev.date === todayIso)
+        .filter(ev => ev.date >= start && ev.date <= end)
         .forEach(ev => events.push(ev));
     } catch (error) {
       /* 單一來源失敗不影響其他日曆／Sheet 備援 */
@@ -630,19 +743,30 @@ function loadTodayCoursesFromCalendars_(todayIso) {
 
   events.sort((a, b) => String(a.startKey || '').localeCompare(String(b.startKey || '')));
 
-  const periodNames = ['第一節', '第二節', '第三節', '第四節', '第五節', '第六節', '第七節', '第八節'];
   return events.map((ev, index) => {
     const parsed = parseCourseSummary_(ev.summary);
+    const dateShort = shortWeekdayLabel_(ev.date);
+    const wdMatch = String(isoWeekdayChar_(ev.date));
     return {
       id: 'cal-' + index + '-' + String(ev.uid || index).slice(0, 12),
-      date: todayIso,
-      period: ev.timeLabel || periodNames[index] || ('第' + (index + 1) + '節'),
+      date: ev.date,
+      dateShort: dateShort,
+      weekday: wdMatch,
+      period: ev.timeLabel || dateShort,
+      timeLabel: ev.timeLabel || '',
       subject: parsed.subject,
       title: parsed.title,
       href: ev.href || subjectHref_(parsed.subject),
       sort_order: index + 1
     };
   });
+}
+
+function isoWeekdayChar_(isoDate) {
+  const match = String(isoDate || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return '';
+  const d = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+  return ['日', '一', '二', '三', '四', '五', '六'][d.getDay()] || '';
 }
 
 /** 活動標題：「科目｜名稱」或「科目: 名稱」；無分隔時科目＝課程 */
@@ -856,6 +980,9 @@ function normalizeRecord_(entity, p) {
       visible: toBool_(p.visible),
       hero_sub: String(p.hero_sub || '').trim().slice(0, 200),
       hero_intro: String(p.hero_intro || '').trim().slice(0, 600),
+      features_json: stringifySubjectJson_(p.features_json, 'features'),
+      resources_json: stringifySubjectJson_(p.resources_json, 'resources'),
+      tasks_json: stringifySubjectJson_(p.tasks_json, 'tasks'),
       sort_order: Number(p.sort_order || (def && def.sort_order) || 0)
     };
   }

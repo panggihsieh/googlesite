@@ -1107,6 +1107,27 @@ button.section-link:hover {
   line-height: 1.35;
 }
 
+.course-day + .course-day {
+  border-top: 1px solid rgba(20, 124, 244, .12);
+}
+
+.course-day-title {
+  margin: 0;
+  padding: 8px 18px 2px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--ink-600);
+}
+
+.course-time {
+  flex-shrink: 0;
+  min-width: 48px;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--ink-500);
+  font-variant-numeric: tabular-nums;
+}
+
 .course-list li {
   display: flex;
   align-items: center;

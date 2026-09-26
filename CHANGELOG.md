@@ -1,5 +1,14 @@
 # CHANGELOG — 大南老邦教學網
 
+## 2026-09-26 — 主題頁「後台預覽編輯」：貼近前台的編輯畫面
+
+> 需求：方案 1 — 後台預覽編輯（比 Google Sites 式前台編輯更快上手）
+
+- 後台「📝 主題頁編輯」點 ✏️（或 `?edit=chinese`）改為**前台樣式預覽面板**：麵包屑、主題色 Hero、學習重點、學習資源、本頁任務，欄位直接嵌在版面內編輯。
+- Sheet `subject_pages` 新增 `features_json`／`resources_json`／`tasks_json`（既有表會自動補欄）；公開 API `schemaVersion` **8**，`pageMeta` 可含 features／resources／tasks。
+- 前台：有 Sheet 覆寫就套用，否則沿用 `data/site-data.js`；「可編輯」開關仍控制前台 ✏️。
+- 需 `clasp push -f`＋部署後，後台與公開 API 才會生效；前台 `script.js` 需上到 GitHub Pages。
+
 ## 2026-09-26 — 今日學習改由「課表日曆」維護（最多 5 組 embed，可勾選啟用）
 
 > 需求：後台可維護最多 5 個 Google 日曆網址；勾選後才使用；內建預設為 embed 網址（非 .ics）。
