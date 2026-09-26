@@ -15,9 +15,9 @@
 
 - 後台新增「📅 課表日曆」：Sheet `calendar_feeds`（`label`／`url`／`visible`＝啟用／`sort_order`），最多 5 筆；空表時自動寫入內建 embed 預設並啟用。
 - 內建預設（使用者面向）：`https://calendar.google.com/calendar/embed?src=84f9b973…%40group.calendar.google.com&ctz=Asia%2FTaipei`
-- GAS 內部會把 embed 的 `src=` 轉成公開 iCal（`…/calendar/ical/{src}/public/basic.ics`）再抓當天行程；當天有行程 → 前台「今日學習」；沒有 → 退回 Sheet `today_learning`／靜態備援。
+- GAS 內部會把 embed 的 `src=` 轉成公開 iCal（`…/calendar/ical/{src}/public/basic.ics`）再抓**當週（日～六）**行程；有行程 → 前台「今日學習／本週課程」；沒有 → 退回 Sheet `today_learning`／靜態備援。
 - 活動標題建議：`科目｜課程名稱`（例如 `國語｜高明說話`）。
-- 已移除先前草案中的單一 `calendar_ics_url` 設定，避免衝突。公開 API `schemaVersion` **5**（`today.source`＝`calendar`｜`sheet`）。
+- 已移除先前草案中的單一 `calendar_ics_url` 設定，避免衝突。
 - 需 `clasp push -f`＋部署後才會生效。
 
 ## 2026-09-26 — 架構定案：前台只用 GitHub Pages（停用 Google Sites）
