@@ -5,7 +5,7 @@
  *
  *   1. 與後台連結
  *      用 JSONP 讀取 GAS 公開資料 API（`DANA_SITE_CONFIG.publicApiUrl` + `?api=public`），
- *      把首頁／嵌入版的「今日學習、最新消息、快速連結」更新成後台（Google Sheet）最新內容；
+ *      把首頁／嵌入版的「今日學習、最新影片、快速連結」更新成後台（Google Sheet）最新內容；
  *      後台「後台設定」的網站基本資料與 Hero 文案也會一併套用（見 applySiteSettings）。
  *      GAS 回傳的是 JavaScript，因此不會遇到 GitHub Pages → Apps Script 的跨網域 CORS 問題。
  *

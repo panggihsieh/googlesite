@@ -418,6 +418,11 @@
       '<path d="M4 10.2a1.7 1.7 0 0 1 1.7-1.7H7l8.6-4.2a1 1 0 0 1 1.4.9v13.6a1 1 0 0 1-1.4.9L7 15.5H5.7A1.7 1.7 0 0 1 4 13.8z"/>' +
       '<path d="M7 15.5 8.4 20h2.4l-1.2-4.5"/>' +
       "</svg>",
+    videos:
+      '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">' +
+      '<rect x="3" y="5" width="18" height="14" rx="2.5"/>' +
+      '<path d="M10 9.2v5.6L15.2 12z"/>' +
+      "</svg>",
     quick:
       '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">' +
       '<path d="M9.6 14.4 14.4 9.6"/>' +
@@ -554,57 +559,99 @@
     );
   }
 
-  function renderNews() {
-    var VISIBLE = 5;
-    var news = DATA.news || [];
+  /* 最新影片顯示數量：後台 settings.videos_limit 可覆寫；留空或無效時用 site-config 預設 3 */
+  var videosLimit = parseVideosLimit(
+    (typeof window !== "undefined" &&
+      window.DANA_SITE_CONFIG &&
+      window.DANA_SITE_CONFIG.videosLimit) ||
+      3,
+    3
+  );
 
-    var list = news
-      .map(function (n, i) {
+  /** 顯示數量：整數 1～6，無效則用 fallback */
+  function parseVideosLimit(value, fallback) {
+    var n = parseInt(String(value == null ? "" : value).trim(), 10);
+    if (!isFinite(n)) return fallback;
+    if (n < 1) return 1;
+    if (n > 6) return 6;
+    return n;
+  }
+
+  /** 從常見 YouTube 網址取出 11 碼影片 ID */
+  function youtubeId(url) {
+    var match = String(url || "")
+      .trim()
+      .match(
+        /(?:youtu\.be\/|youtube\.com\/(?:watch\?(?:[^#]*&)?v=|embed\/|shorts\/|live\/))([A-Za-z0-9_-]{11})/
+      );
+    return match ? match[1] : "";
+  }
+
+  /** 顯示用日期：yyyy-MM-dd → MM/DD；其餘原樣 */
+  function videoDateLabel(date) {
+    var text = String(date || "").trim();
+    var match = text.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (match) return match[2] + "/" + match[3];
+    return text;
+  }
+
+  /** 最新影片：依日期新→舊取前 N 支（N 由後台 videos_limit 控制），嵌入 YouTube */
+  function renderVideos() {
+    var visible = videosLimit;
+    var videos = (DATA.videos || [])
+      .map(function (v) {
+        var id = v.youtubeId || youtubeId(v.url);
+        return id ? Object.assign({}, v, { youtubeId: id }) : null;
+      })
+      .filter(Boolean)
+      .slice()
+      .sort(function (a, b) {
+        var dateA = String(a.date || "");
+        var dateB = String(b.date || "");
+        if (dateA !== dateB) return dateB.localeCompare(dateA);
+        return Number(a.sort_order || 0) - Number(b.sort_order || 0);
+      })
+      .slice(0, visible);
+
+    var list = videos
+      .map(function (v) {
+        var embed =
+          "https://www.youtube-nocookie.com/embed/" +
+          encodeURIComponent(v.youtubeId) +
+          "?rel=0";
         return (
-          "<li" +
-          (i >= VISIBLE ? ' class="is-hidden"' : "") +
-          ">" +
-          '<span class="news-date">' +
-          esc(n.date) +
+          "<li>" +
+          '<div class="video-meta">' +
+          '<span class="video-date">' +
+          esc(videoDateLabel(v.date)) +
           "</span>" +
-          '<span class="news-body">' +
-          '<a href="' +
-          esc(link(n.href)) +
-          '">' +
-          esc(n.title) +
+          '<a class="video-title" href="' +
+          esc(v.url || embed) +
+          '" target="_blank" rel="noopener">' +
+          esc(v.title || "YouTube 影片") +
           "</a>" +
-          "</span>" +
+          "</div>" +
+          '<div class="video-frame">' +
+          '<iframe src="' +
+          esc(embed) +
+          '" title="' +
+          esc(v.title || "YouTube 影片") +
+          '" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>' +
+          "</div>" +
           "</li>"
         );
       })
       .join("");
 
-    var more =
-      news.length > VISIBLE
-        ? '<button class="section-link" type="button" id="news-more">更多 <span aria-hidden="true">›</span></button>'
-        : "";
-
-    if (!el("news-panel")) return;
+    if (!el("videos-panel")) return;
 
     render(
-      "news-panel",
-      panelHead("news", "最新消息", more) +
-        '<ul class="news-list">' +
-        list +
-        "</ul>"
+      "videos-panel",
+      panelHead("videos", "最新影片") +
+        (list
+          ? '<ul class="video-list">' + list + "</ul>"
+          : '<p class="video-empty">目前尚無影片，請到後台新增 YouTube 網址。</p>')
     );
-
-    var btn = el("news-more");
-    if (btn) {
-      btn.addEventListener("click", function () {
-        document
-          .querySelectorAll("#news-panel .is-hidden")
-          .forEach(function (li) {
-            li.classList.remove("is-hidden");
-          });
-        btn.remove();
-      });
-    }
   }
 
   function renderQuickLinks() {
@@ -694,7 +741,12 @@
 
     /* today 用合併，讓 data/site-data.js 的 cta 等欄位不被後台覆蓋掉 */
     if (remote.today) DATA.today = Object.assign({}, DATA.today || {}, remote.today);
-    if (Array.isArray(remote.news) && remote.news.length) DATA.news = remote.news;
+    if (Array.isArray(remote.videos) && remote.videos.length) DATA.videos = remote.videos;
+    if (Array.isArray(remote.editablePages)) DATA.editablePages = remote.editablePages;
+    if (remote.pageMeta && typeof remote.pageMeta === "object") {
+      DATA.pageMeta = remote.pageMeta;
+      applyPageHero();
+    }
     if (Array.isArray(remote.quickLinks) && remote.quickLinks.length) {
       DATA.quickLinks = remote.quickLinks.map(function (item) {
         var base =
@@ -706,8 +758,9 @@
     }
 
     renderToday();
-    renderNews();
+    renderVideos();
     renderQuickLinks();
+    renderPageEditEntry();
 
     /* 後台連結管理：導覽列與頁尾連結（會一併重繪 header／footer） */
     if (Array.isArray(remote.siteLinks)) {
@@ -837,6 +890,13 @@
       changed = true;
     }
 
+    /* 最新影片顯示數量：有填才覆寫；留空維持目前值（預設 3） */
+    var limitText = String(settings.videos_limit == null ? "" : settings.videos_limit).trim();
+    if (limitText) {
+      videosLimit = parseVideosLimit(limitText, videosLimit);
+      changed = true;
+    }
+
     if (!changed) return false;
 
     DATA.site = SITE; // 讓其他讀 DATA.site 的地方也拿到後台設定
@@ -883,6 +943,46 @@
 
   function pageData() {
     return (DATA.pages || {})[PAGE] || {};
+  }
+
+  /** 後台 pageMeta 覆寫主題頁副標／簡介 */
+  function applyPageHero() {
+    var meta = (DATA.pageMeta || {})[PAGE];
+    if (!meta) return;
+    var sub = document.querySelector(".page-hero-sub");
+    var intro = document.querySelector(".page-hero-intro");
+    if (meta.heroSub && sub) sub.textContent = meta.heroSub;
+    if (meta.heroIntro && intro) intro.textContent = meta.heroIntro;
+  }
+
+  /**
+   * 後台勾選「可編輯」的主題頁：麵包屑旁顯示 ✏️，
+   * 點了開後台管理（?edit=<主題id>）。
+   */
+  function renderPageEditEntry() {
+    var crumb = document.querySelector(".breadcrumb");
+    if (!crumb) return;
+
+    var existing = crumb.querySelector(".page-edit-entry");
+    if (existing) existing.remove();
+
+    var editable = (DATA.editablePages || []).indexOf(PAGE) >= 0;
+    if (!editable) return;
+
+    var config = (typeof window !== "undefined" && window.DANA_SITE_CONFIG) || {};
+    var adminBase = String(config.adminUrl || config.publicApiUrl || "").trim();
+    if (!adminBase) return;
+
+    var href = adminBase + (adminBase.indexOf("?") >= 0 ? "&" : "?") + "edit=" + encodeURIComponent(PAGE);
+    var a = document.createElement("a");
+    a.className = "page-edit-entry";
+    a.href = href;
+    a.target = "_blank";
+    a.rel = "noopener";
+    a.title = "後台編輯此頁";
+    a.setAttribute("aria-label", "後台編輯此頁");
+    a.textContent = "✏️";
+    crumb.appendChild(a);
   }
 
   function renderFeatures() {
@@ -1022,7 +1122,7 @@
 
     renderSubjects();
     renderToday();
-    renderNews();
+    renderVideos();
     renderQuickLinks();
 
     renderFeatures();
@@ -1030,6 +1130,8 @@
     renderTasks();
     renderGallery();
     renderOtherSubjects();
+    applyPageHero();
+    renderPageEditEntry();
 
     /* 靜態內容先顯示，再與後台連線更新資料與時間 */
     connectBackend();

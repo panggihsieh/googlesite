@@ -1,5 +1,50 @@
 # CHANGELOG — 大南老邦教學網
 
+## 2026-09-26 — 今日學習改由「課表日曆」維護（最多 5 組 embed，可勾選啟用）
+
+> 需求：後台可維護最多 5 個 Google 日曆網址；勾選後才使用；內建預設為 embed 網址（非 .ics）。
+
+- 後台新增「📅 課表日曆」：Sheet `calendar_feeds`（`label`／`url`／`visible`＝啟用／`sort_order`），最多 5 筆；空表時自動寫入內建 embed 預設並啟用。
+- 內建預設（使用者面向）：`https://calendar.google.com/calendar/embed?src=84f9b973…%40group.calendar.google.com&ctz=Asia%2FTaipei`
+- GAS 內部會把 embed 的 `src=` 轉成公開 iCal（`…/calendar/ical/{src}/public/basic.ics`）再抓當天行程；當天有行程 → 前台「今日學習」；沒有 → 退回 Sheet `today_learning`／靜態備援。
+- 活動標題建議：`科目｜課程名稱`（例如 `國語｜高明說話`）。
+- 已移除先前草案中的單一 `calendar_ics_url` 設定，避免衝突。公開 API `schemaVersion` **5**（`today.source`＝`calendar`｜`sheet`）。
+- 需 `clasp push -f`＋部署後才會生效。
+
+## 2026-09-26 — 架構定案：前台只用 GitHub Pages（停用 Google Sites）
+
+> 需求：不使用 Google Sites；前台＝GitHub，後端＝GAS＋Drive＋Sheet。
+
+- 正式入口改為僅 `https://panggihsieh.github.io/googlesite/`。
+- 文件與後台文案／設定占位字串改為 GitHub Pages＋Drive；後台移除「Google Sites 網站」連結。
+- `google-sites-embed.html` 等嵌入檔改為歷史遺留，新功能不再依賴。
+
+## 2026-09-26 — 主題頁「可編輯」開關：前台 ✏️ 開後台編輯頁
+
+> 需求：後台勾選某主題為可編輯 → 前台出現 ✏️ → 點了開後台編輯頁（方案 B）
+
+- 後台新增「📝 主題頁編輯」：六大主題固定清單；勾選「可編輯」；可編副標／簡介；不可新增／刪除。
+- 公開 API `schemaVersion` **6**：`editablePages`、`pageMeta`（heroSub／heroIntro）。
+- 前台主題頁麵包屑旁，若該主題在 `editablePages`，顯示 ✏️，連到後台 `?edit=<主題id>`（例如 `?edit=chinese`）。
+- 需 `clasp push -f`＋部署後，後台與公開 API 才會生效。
+
+## 2026-09-26 — 後台可設定「最新影片」顯示數量（1～6）
+
+> 需求：後台能否控制前台最新影片數量？
+
+- 後台「⚙️ 後台設定」新增欄位 `videos_limit`（最新影片顯示數量）；填 1～6，留空＝預設 3。
+- 前台 `script.js`／嵌入版 `js/embed.js` 讀取該設定後再決定嵌入幾支；靜態預設見 `data/site-config.js` 的 `videosLimit`。
+- 需同步 GAS（`clasp push -f`＋部署）後，後台表單才會出現此欄位。
+
+## 2026-09-26 — 最新消息面板改為 YouTube 最新影片（後台管理 URL，前台嵌入最近 3 支）
+
+> 需求：對外分享站的「最新消息」改為 YouTube embed；網址由後台管理，前台自動列出最近三支。
+
+- 後台：新增 Google Sheet 工作表 `videos`（`date`／`title`／`url`／`visible`／`sort_order`）；側邊選單「最新影片」CRUD；儲存時驗證 YouTube 網址。
+- 公開 API：`schemaVersion` 升為 **4**，新增 `videos`（可見列、含 `youtubeId`，依日期新→舊排序）；`news` 仍回傳以相容舊快取，前台不再使用。
+- 前台／嵌入版：「最新消息」面板改為「最新影片」，以 `youtube-nocookie` iframe 嵌入最多 3 支；靜態備援見 `data/site-data.js`、`data/videos.js`。
+- 部署提醒：需 `clasp push -f` 後 `clasp deploy -i AKfycbz2…`，Sheet 會在首次讀取時自動建立 `videos` 分頁。
+
 ## 2026-09-20 — 遠端同步：GAS 部署更新到 version 4（`clasp`）＋ GitHub Pages 公開狀態檢查
 
 > 需求：檢查並開啟 GitHub Pages 正式對外部署（push `main` 讓網站公開），並確認遠端（GitHub Pages ＋ Apps Script）與本機一致

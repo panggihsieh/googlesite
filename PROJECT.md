@@ -2,31 +2,31 @@
 
 ## 1. 專案定位
 
-「大南老邦教學網」是一個公開瀏覽的國小高年級教學網站。
+「大南老邦教學網」是一個公開瀏覽的國小高年級教學網站（對外分享：家長、研習老師）。
 
-- Google Sites：負責最外層網站、主導覽列與發布入口。
-- GitHub Pages：負責可維護的教材首頁、互動內容與主題頁。
+- **前台**：GitHub Pages（唯一正式入口與教材頁）。
+- **後台**：Google Apps Script Web App（白名單教師）。
+- **資料**：Google Sheet；**檔案**：Google Drive（本站只存連結）。
+- **不使用** Google Sites。
 - 外部服務：Google Classroom、Drive、Tinkercad、因材網等各自負責登入與權限。
 - 本網站本身不保存學生帳號密碼，也不自行建立登入系統。
 
 ## 2. 正式網址
 
-- Google Sites：`https://sites.google.com/view/dana-edu/`
 - GitHub Pages：`https://panggihsieh.github.io/googlesite/`
-- Google Sites 嵌入首頁：`https://panggihsieh.github.io/googlesite/google-sites-embed.html`
 - GitHub Repo：`panggihsieh/googlesite`
+- 後台／公開 API：`data/site-config.js` 的 `adminUrl`／`publicApiUrl`（同一 GAS 部署）
 
 ## 3. 維護原則
 
-1. Google Sites 的嵌入網址設定完成後，日常更新不需要重新嵌入。
-2. 日常內容修改以 `data/` 為主，不直接改 HTML。
-3. 版面修改集中在 `css/embed.css`。
-4. 嵌入首頁互動集中在 `js/embed.js`。
-5. `google-sites-embed.html` 只保留穩定的頁面骨架。
-6. 不在 GitHub 公開儲存庫放學生個資、密碼、API Key 或私人檔案。
-7. 需要登入的資源只提供外部連結，由該平台處理驗證。
-8. 前台與後台的連線、後台資料覆寫、後台時間同步都集中在 `js/backend.js`；頁面上要顯示日期或時間時，請用 `DANA_BACKEND` 的函式，不要直接用裝置的 `new Date()`。
-9. 後台管理畫面（`gas/Index.html`）依設計圖 `admin.png` 的內容與風格維護：登入頁、側邊選單、儀表板（歡迎卡＋統計卡＋快速操作）、管理頁表格。**新增模組時要沿用同一套樣式**（`:root` 色票、`.panel`、`.summary-card`、`.action-card`、`.btn`、`.table`）與相同語氣的中文文案。
+1. 正式入口只有 GitHub Pages；push `main` 後由 Actions 發佈。
+2. 日常內容修改以 `data/` 與後台（Sheet）為主，少直接改 HTML。
+3. 版面修改集中在 `style.css`／`index.html`／`pages/*.html`。
+4. 不在 GitHub 公開儲存庫放學生個資、密碼、API Key、私人檔案或教材原檔（檔案放 Drive）。
+5. 需要登入的資源只提供外部連結，由該平台處理驗證。
+6. 前台與後台的連線、後台資料覆寫、後台時間同步都集中在 `js/backend.js`；頁面上要顯示日期或時間時，請用 `DANA_BACKEND` 的函式，不要直接用裝置的 `new Date()`。
+7. 後台管理畫面（`gas/Index.html`）依設計圖 `admin.png` 的內容與風格維護：**新增模組時要沿用同一套樣式**（`:root` 色票、`.panel`、`.summary-card`、`.action-card`、`.btn`、`.table`）與相同語氣的中文文案。
+8. 舊嵌入檔（`google-sites-embed.html` 等）僅歷史遺留，新功能不要再依賴。
 
 ## 4. 專案結構
 

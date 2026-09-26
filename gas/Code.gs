@@ -3,11 +3,20 @@ const CONFIG = Object.freeze({
   ADMIN_EMAIL: 'teacher.hsieh@gmail.com',
   TIMEZONE: 'Asia/Taipei',
   PUBLIC_CACHE_SECONDS: 60,
-  PUBLIC_SCHEMA_VERSION: 3,
+  PUBLIC_SCHEMA_VERSION: 6,
+  /* 今日學習：最多 5 組公開 Google 日曆（後台存 embed 網址；抓課表時在 GAS 轉成 iCal） */
+  MAX_CALENDAR_FEEDS: 5,
+  DEFAULT_CALENDAR_EMBED_URL: 'https://calendar.google.com/calendar/embed?src=84f9b973e435bd5fba31848b07c46947612682c619a0d6a2847fce36d038130d%40group.calendar.google.com&ctz=Asia%2FTaipei',
   SHEETS: {
     TODAY: 'today_learning',
     NEWS: 'news',
+    /* 最新影片：前台面板嵌入 YouTube（後台管理網址；顯示數量由 settings.videos_limit 控制） */
+    VIDEOS: 'videos',
     LINKS: 'quick_links',
+    /* 課表日曆：最多 5 筆 embed／iCal 網址；勾選「啟用」才會抓當天行程 */
+    CALENDARS: 'calendar_feeds',
+    /* 主題頁：勾選「可編輯」後前台出現 ✏️，點了開後台編輯頁 */
+    SUBJECTS: 'subject_pages',
     /* 後台連結管理：管理前台導覽列（area=nav）與頁尾（area=footer）的連結 */
     SITE_LINKS: 'site_links',
     /* 後台設定：網站基本資料（key/value） */
@@ -17,11 +26,24 @@ const CONFIG = Object.freeze({
   SHEET_HEADERS: {
     today_learning: ['id', 'date', 'period', 'subject', 'title', 'href', 'visible', 'sort_order', 'updated_at'],
     news: ['id', 'date', 'tag', 'title', 'href', 'visible', 'sort_order', 'updated_at'],
+    videos: ['id', 'date', 'title', 'url', 'visible', 'sort_order', 'updated_at'],
+    calendar_feeds: ['id', 'label', 'url', 'visible', 'sort_order', 'updated_at'],
+    subject_pages: ['id', 'label', 'href', 'visible', 'hero_sub', 'hero_intro', 'sort_order', 'updated_at'],
     quick_links: ['id', 'name', 'icon', 'url', 'requires_login', 'visible', 'sort_order', 'updated_at'],
     site_links: ['id', 'area', 'group', 'label', 'icon', 'href', 'visible', 'sort_order', 'updated_at'],
     settings: ['key', 'value', 'updated_at']
   }
 });
+
+/* 六大主題頁（固定清單；後台只開關「可編輯」與編輯副標／簡介，不新增／刪除） */
+const SUBJECT_PAGE_DEFS = Object.freeze([
+  { id: 'chinese', label: '國語', href: 'pages/chinese.html', sort_order: 1 },
+  { id: 'math', label: '數學', href: 'pages/math.html', sort_order: 2 },
+  { id: 'env', label: '環境教育', href: 'pages/env.html', sort_order: 3 },
+  { id: 'ai', label: 'AI 科技', href: 'pages/ai.html', sort_order: 4 },
+  { id: 'tasks', label: '學習任務', href: 'pages/tasks.html', sort_order: 5 },
+  { id: 'works', label: '學生作品', href: 'pages/works.html', sort_order: 6 }
+]);
 
 /* 後台設定（工作表 settings，key → value）：
  * 前台可直接套用的網站基本資料，欄位順序＝後台表單順序，也是公開 API 的輸出順序。
@@ -37,10 +59,11 @@ const SETTINGS_FIELDS = Object.freeze([
   { key: 'grade', label: '年級定位', group: '網站基本資料', placeholder: '高年級數位學習', hint: '頁尾說明' },
   { key: 'tagline', label: '網站標語', group: '網站基本資料', placeholder: '學習 × 探究 × 創造更好的自己', hint: '頁首品牌下方的小字' },
   { key: 'description', label: '網站簡介', group: '網站基本資料', type: 'textarea', placeholder: '大南國小高年級數位學習 × AI × 探究實作', hint: '頁尾說明' },
-  { key: 'site_description', label: '網站描述', group: '頁尾說明', type: 'textarea', placeholder: '本網站以 HTML / CSS / JavaScript 靜態建置，透過 iframe 嵌入 Google Sites。內容由後台（Google Sheet + Apps Script）同步，瀏覽不需要登入。', hint: '出現在頁尾、學校與年級下方的說明段落；留空時沿用資料檔的內建文字' },
-  { key: 'hero_title', label: '首頁橫幅標題', group: '首頁橫幅（Hero）', placeholder: '學習 × 探究 ×', hint: 'Google Sites 嵌入版的 Hero 標題' },
-  { key: 'hero_lead', label: '首頁橫幅副標', group: '首頁橫幅（Hero）', type: 'textarea', placeholder: '大南國小高年級數位學習 × AI × 探究實作', hint: '嵌入版 Hero 副標' },
-  { key: 'keywords', label: '學習關鍵字', group: '首頁橫幅（Hero）', type: 'list', placeholder: '閱讀世界、探索自然、擁抱科技、創造未來', hint: '用「、」或逗號分隔，嵌入版 Hero 會變成一顆顆標籤' }
+  { key: 'site_description', label: '網站描述', group: '頁尾說明', type: 'textarea', placeholder: '本網站以 HTML / CSS / JavaScript 靜態建置，部署於 GitHub Pages。內容由後台（Google Sheet + Apps Script）同步；教材檔放 Google Drive。瀏覽不需要登入。', hint: '出現在頁尾、學校與年級下方的說明段落；留空時沿用資料檔的內建文字' },
+  { key: 'hero_title', label: '首頁橫幅標題', group: '首頁橫幅（Hero）', placeholder: '學習 × 探究 ×', hint: '網站 Hero／品牌相關文案' },
+  { key: 'hero_lead', label: '首頁橫幅副標', group: '首頁橫幅（Hero）', type: 'textarea', placeholder: '大南國小高年級數位學習 × AI × 探究實作', hint: 'Hero 副標' },
+  { key: 'keywords', label: '學習關鍵字', group: '首頁橫幅（Hero）', type: 'list', placeholder: '閱讀世界、探索自然、擁抱科技、創造未來', hint: '用「、」或逗號分隔' },
+  { key: 'videos_limit', label: '最新影片顯示數量', group: '最新影片', placeholder: '3', hint: '前台「最新影片」面板要嵌入幾支（填 1～6；留空＝3）' }
 ]);
 
 function doGet(e) {
@@ -52,6 +75,8 @@ function doGet(e) {
 
   const template = HtmlService.createTemplateFromFile('Index');
   template.initialUser = JSON.stringify(getCurrentUser_());
+  /* 前台 ✏️ 深連結：?edit=chinese → 後台直接開該主題編輯頁 */
+  template.initialEdit = JSON.stringify(String(params.edit || '').trim());
   return template
     .evaluate()
     .setTitle('大南老邦教學網｜後台管理')
@@ -121,6 +146,8 @@ function getPublicData_() {
   const cached = cache.get(cacheKey);
   if (cached) return JSON.parse(cached);
 
+  const todayIso = getServerTime_().date;
+
   const todayRows = readTable_(CONFIG.SHEETS.TODAY)
     .filter(row => toBool_(row.visible))
     .map(row => ({
@@ -133,6 +160,22 @@ function getPublicData_() {
       sort_order: Number(row.sort_order || 0)
     }));
 
+  /* 已啟用的課表日曆（最多 5）：當天有行程則優先於 Sheet */
+  const calendarCourses = loadTodayCoursesFromCalendars_(todayIso);
+  const todayPayload = calendarCourses.length
+    ? {
+        date: todayIso,
+        dateLabel: formatDateLabel_(todayIso),
+        courses: calendarCourses,
+        source: 'calendar'
+      }
+    : {
+        date: todayRows.length ? String(todayRows[0].date || todayIso) : todayIso,
+        dateLabel: formatDateLabel_(todayRows.length ? String(todayRows[0].date || todayIso) : todayIso),
+        courses: todayRows,
+        source: 'sheet'
+      };
+
   const news = readTable_(CONFIG.SHEETS.NEWS)
     .filter(row => toBool_(row.visible))
     .map(row => ({
@@ -143,6 +186,20 @@ function getPublicData_() {
       href: String(row.href || ''),
       sort_order: Number(row.sort_order || 0)
     }));
+
+  /* 最新影片：可見列依日期新→舊、同日再依 sort_order；前台只顯示前 3 支 */
+  const videos = sortVideosRecent_(
+    readTable_(CONFIG.SHEETS.VIDEOS)
+      .filter(row => toBool_(row.visible) && extractYoutubeId_(row.url))
+      .map(row => ({
+        id: String(row.id || ''),
+        date: String(row.date || ''),
+        title: String(row.title || ''),
+        url: String(row.url || ''),
+        youtubeId: extractYoutubeId_(row.url),
+        sort_order: Number(row.sort_order || 0)
+      }))
+  );
 
   const links = readTable_(CONFIG.SHEETS.LINKS)
     .filter(row => toBool_(row.visible))
@@ -168,8 +225,6 @@ function getPublicData_() {
       sort_order: Number(row.sort_order || 0)
     }));
 
-  const currentDate = todayRows.length ? todayRows[0].date : '';
-
   /* 後台設定：只輸出有填寫的欄位；前台沒收到的欄位會沿用 GitHub 靜態資料 */
   const settingsRows = readSettings_();
   const settings = {};
@@ -178,19 +233,35 @@ function getPublicData_() {
     if (value) settings[field.key] = value;
   });
 
+  /* 主題頁：可編輯清單＋副標／簡介覆寫（有填才輸出） */
+  const subjectRows = ensureSubjectPages_();
+  const editablePages = subjectRows
+    .filter(row => toBool_(row.visible))
+    .map(row => String(row.id || ''));
+  const pageMeta = {};
+  subjectRows.forEach(row => {
+    const id = String(row.id || '');
+    if (!id) return;
+    const heroSub = String(row.hero_sub || '').trim();
+    const heroIntro = String(row.hero_intro || '').trim();
+    if (!heroSub && !heroIntro) return;
+    pageMeta[id] = {};
+    if (heroSub) pageMeta[id].heroSub = heroSub;
+    if (heroIntro) pageMeta[id].heroIntro = heroIntro;
+  });
+
   /* 這裡只快取資料（不含時間）；後台時間由 publicApiResponse_ 每次即時加上。 */
   const payload = {
     ok: true,
     schemaVersion: CONFIG.PUBLIC_SCHEMA_VERSION,
-    today: {
-      date: currentDate,
-      dateLabel: formatDateLabel_(currentDate),
-      courses: todayRows
-    },
+    today: todayPayload,
     news: news,
+    videos: videos,
     quickLinks: links,
     siteLinks: siteLinks,
-    settings: settings
+    settings: settings,
+    editablePages: editablePages,
+    pageMeta: pageMeta
   };
 
   cache.put(cacheKey, JSON.stringify(payload), CONFIG.PUBLIC_CACHE_SECONDS);
@@ -220,6 +291,9 @@ function getBootstrapData() {
     user: getCurrentUser_(),
     today: readTable_(CONFIG.SHEETS.TODAY),
     news: readTable_(CONFIG.SHEETS.NEWS),
+    videos: readTable_(CONFIG.SHEETS.VIDEOS),
+    calendars: ensureCalendarFeeds_(),
+    subjects: ensureSubjectPages_(),
     links: readTable_(CONFIG.SHEETS.LINKS),
     siteLinks: readTable_(CONFIG.SHEETS.SITE_LINKS),
     settings: readSettings_(),
@@ -325,6 +399,21 @@ function saveRow(entity, payload) {
   const targetIndex = data.findIndex((row, index) => index > 0 && String(row[idIndex]) === String(record.id));
   record.updated_at = Utilities.formatDate(new Date(), CONFIG.TIMEZONE, 'yyyy-MM-dd HH:mm:ss');
 
+  /* 課表日曆最多 5 筆（含內建預設） */
+  if (entity === 'calendars' && targetIndex < 1) {
+    const existing = readTable_(CONFIG.SHEETS.CALENDARS);
+    if (existing.length >= CONFIG.MAX_CALENDAR_FEEDS) {
+      throw new Error('課表日曆最多 ' + CONFIG.MAX_CALENDAR_FEEDS + ' 組，請先停用或刪除其中一筆再新增。');
+    }
+  }
+
+  /* 主題頁只允許更新既有六大主題，不可新增 */
+  if (entity === 'subjects') {
+    const allowed = SUBJECT_PAGE_DEFS.some(def => def.id === record.id);
+    if (!allowed) throw new Error('不支援的主題頁：' + record.id);
+    if (targetIndex < 1) throw new Error('主題頁清單為固定六項，請重新整理後再試。');
+  }
+
   const rowValues = headers.map(h => record[h] !== undefined ? record[h] : '');
 
   if (targetIndex >= 1) {
@@ -345,6 +434,9 @@ function saveRow(entity, payload) {
 function deleteRow(entity, id) {
   assertAdmin_();
   if (!id) throw new Error('缺少 id');
+  if (entity === 'subjects') {
+    throw new Error('主題頁為固定清單，不可刪除；請改用「可編輯」開關。');
+  }
 
   const def = getEntityDef_(entity);
   const sheet = getSheet_(def.sheet);
@@ -413,11 +505,260 @@ function getEntityDef_(entity) {
   const map = {
     today: { sheet: CONFIG.SHEETS.TODAY },
     news: { sheet: CONFIG.SHEETS.NEWS },
+    videos: { sheet: CONFIG.SHEETS.VIDEOS },
+    calendars: { sheet: CONFIG.SHEETS.CALENDARS },
+    subjects: { sheet: CONFIG.SHEETS.SUBJECTS },
     links: { sheet: CONFIG.SHEETS.LINKS },
     siteLinks: { sheet: CONFIG.SHEETS.SITE_LINKS }
   };
   if (!map[entity]) throw new Error('不支援的資料類型');
   return map[entity];
+}
+
+/** 從常見 YouTube 網址取出 11 碼影片 ID；無法辨識則回空字串 */
+function extractYoutubeId_(url) {
+  const match = String(url || '').trim().match(
+    /(?:youtu\.be\/|youtube\.com\/(?:watch\?(?:[^#]*&)?v=|embed\/|shorts\/|live\/))([A-Za-z0-9_-]{11})/
+  );
+  return match ? match[1] : '';
+}
+
+/** 最新影片排序：日期新→舊（yyyy-MM-dd 字串可比），同日再依 sort_order 小→大 */
+function sortVideosRecent_(rows) {
+  return (rows || []).slice().sort((a, b) => {
+    const dateA = String(a.date || '');
+    const dateB = String(b.date || '');
+    if (dateA !== dateB) return dateB.localeCompare(dateA);
+    return Number(a.sort_order || 0) - Number(b.sort_order || 0);
+  });
+}
+
+/* ---------- 課表日曆（最多 5 組 embed／iCal） ---------- */
+
+/** 主題頁清單：空表時寫入六大主題（預設不可編輯） */
+function ensureSubjectPages_() {
+  const rows = readTable_(CONFIG.SHEETS.SUBJECTS);
+  const byId = {};
+  rows.forEach(row => {
+    byId[String(row.id || '')] = row;
+  });
+
+  const sheet = getSheet_(CONFIG.SHEETS.SUBJECTS);
+  const now = Utilities.formatDate(new Date(), CONFIG.TIMEZONE, 'yyyy-MM-dd HH:mm:ss');
+  let changed = false;
+
+  SUBJECT_PAGE_DEFS.forEach(def => {
+    if (byId[def.id]) return;
+    sheet.appendRow([
+      def.id,
+      def.label,
+      def.href,
+      false,
+      '',
+      '',
+      def.sort_order,
+      now
+    ]);
+    changed = true;
+  });
+
+  return changed ? readTable_(CONFIG.SHEETS.SUBJECTS) : rows;
+}
+
+/** 讀取課表日曆；空表時寫入內建預設（embed 網址、已啟用） */
+function ensureCalendarFeeds_() {
+  const rows = readTable_(CONFIG.SHEETS.CALENDARS);
+  if (rows.length) return rows;
+
+  const sheet = getSheet_(CONFIG.SHEETS.CALENDARS);
+  const now = Utilities.formatDate(new Date(), CONFIG.TIMEZONE, 'yyyy-MM-dd HH:mm:ss');
+  sheet.appendRow([
+    'calendar-default',
+    '大南課表',
+    CONFIG.DEFAULT_CALENDAR_EMBED_URL,
+    true,
+    1,
+    now
+  ]);
+  return readTable_(CONFIG.SHEETS.CALENDARS);
+}
+
+/**
+ * embed?src=… → public iCal；已是 …/ical/…/basic.ics 則原樣。
+ * 無法辨識回空字串。
+ */
+function toCalendarIcsUrl_(url) {
+  const raw = String(url || '').trim();
+  if (!raw) return '';
+
+  if (/\/calendar\/ical\/[^/]+\/public\/basic\.ics/i.test(raw)) return raw;
+
+  const embedMatch = raw.match(/[?&]src=([^&]+)/i);
+  if (embedMatch) {
+    const src = decodeURIComponent(embedMatch[1].replace(/\+/g, ' '));
+    if (!src) return '';
+    return 'https://calendar.google.com/calendar/ical/' + encodeURIComponent(src) + '/public/basic.ics';
+  }
+
+  return '';
+}
+
+/** 合併所有已啟用日曆中「今天」的行程 → 前台 courses */
+function loadTodayCoursesFromCalendars_(todayIso) {
+  const feeds = ensureCalendarFeeds_()
+    .filter(row => toBool_(row.visible))
+    .slice(0, CONFIG.MAX_CALENDAR_FEEDS);
+
+  const events = [];
+  feeds.forEach(feed => {
+    const icsUrl = toCalendarIcsUrl_(feed.url);
+    if (!icsUrl) return;
+    try {
+      const response = UrlFetchApp.fetch(icsUrl, {
+        muteHttpExceptions: true,
+        followRedirects: true,
+        headers: { 'User-Agent': 'DanaEduCalendar/1.0' }
+      });
+      if (response.getResponseCode() >= 400) return;
+      parseIcsEvents_(response.getContentText())
+        .filter(ev => ev.date === todayIso)
+        .forEach(ev => events.push(ev));
+    } catch (error) {
+      /* 單一來源失敗不影響其他日曆／Sheet 備援 */
+    }
+  });
+
+  events.sort((a, b) => String(a.startKey || '').localeCompare(String(b.startKey || '')));
+
+  const periodNames = ['第一節', '第二節', '第三節', '第四節', '第五節', '第六節', '第七節', '第八節'];
+  return events.map((ev, index) => {
+    const parsed = parseCourseSummary_(ev.summary);
+    return {
+      id: 'cal-' + index + '-' + String(ev.uid || index).slice(0, 12),
+      date: todayIso,
+      period: ev.timeLabel || periodNames[index] || ('第' + (index + 1) + '節'),
+      subject: parsed.subject,
+      title: parsed.title,
+      href: ev.href || subjectHref_(parsed.subject),
+      sort_order: index + 1
+    };
+  });
+}
+
+/** 活動標題：「科目｜名稱」或「科目: 名稱」；無分隔時科目＝課程 */
+function parseCourseSummary_(summary) {
+  const text = String(summary || '').trim();
+  const match = text.match(/^(.+?)\s*[｜|:：\/／]\s*(.+)$/);
+  if (match) {
+    return { subject: match[1].trim() || '課程', title: match[2].trim() || text };
+  }
+  return { subject: '課程', title: text || '未命名活動' };
+}
+
+function subjectHref_(subject) {
+  const key = String(subject || '').replace(/\s+/g, '');
+  const map = {
+    '國語': 'pages/chinese.html',
+    '國文': 'pages/chinese.html',
+    '數學': 'pages/math.html',
+    '環境': 'pages/env.html',
+    '環境教育': 'pages/env.html',
+    'AI': 'pages/ai.html',
+    '科技': 'pages/ai.html',
+    '任務': 'pages/tasks.html',
+    '學習任務': 'pages/tasks.html',
+    '作品': 'pages/works.html',
+    '學生作品': 'pages/works.html'
+  };
+  return map[key] || 'index.html';
+}
+
+/** 簡易 ICS 解析（Google Calendar 公開 basic.ics） */
+function parseIcsEvents_(icsText) {
+  const unfolded = String(icsText || '')
+    .replace(/\r\n/g, '\n')
+    .replace(/\n[ \t]/g, '');
+
+  const blocks = unfolded.split('BEGIN:VEVENT');
+  const events = [];
+
+  for (let i = 1; i < blocks.length; i++) {
+    const block = blocks[i].split('END:VEVENT')[0] || '';
+    const fields = {};
+    block.split('\n').forEach(line => {
+      const cut = line.indexOf(':');
+      if (cut < 1) return;
+      const name = line.slice(0, cut).split(';')[0].toUpperCase();
+      fields[name] = line.slice(cut + 1);
+    });
+
+    const startRaw = fields.DTSTART || '';
+    const parsedStart = parseIcsDateTime_(startRaw);
+    if (!parsedStart.date) continue;
+
+    let href = String(fields.URL || '').trim();
+    if (!href) {
+      const desc = String(fields.DESCRIPTION || '');
+      const link = desc.match(/https?:\/\/[^\s\\]+/);
+      if (link) href = link[0].replace(/\\n.*/, '').replace(/\\,/g, ',');
+    }
+
+    events.push({
+      uid: String(fields.UID || ''),
+      summary: icsUnescape_(fields.SUMMARY || ''),
+      date: parsedStart.date,
+      timeLabel: parsedStart.timeLabel,
+      startKey: parsedStart.startKey,
+      href: href
+    });
+  }
+
+  return events;
+}
+
+function icsUnescape_(value) {
+  return String(value || '')
+    .replace(/\\n/gi, ' ')
+    .replace(/\\,/g, ',')
+    .replace(/\\;/g, ';')
+    .replace(/\\\\/g, '\\')
+    .trim();
+}
+
+/** DTSTART → { date: yyyy-MM-dd, timeLabel, startKey }（Asia/Taipei） */
+function parseIcsDateTime_(value) {
+  const raw = String(value || '').trim();
+  if (!raw) return { date: '', timeLabel: '', startKey: '' };
+
+  /* 全日：20260926 */
+  if (/^\d{8}$/.test(raw)) {
+    const date = raw.slice(0, 4) + '-' + raw.slice(4, 6) + '-' + raw.slice(6, 8);
+    return { date: date, timeLabel: '', startKey: date + 'T00:00:00' };
+  }
+
+  /* 本地或 UTC：20260926T080000 或 20260926T000000Z */
+  const match = raw.match(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})(Z)?$/);
+  if (!match) return { date: '', timeLabel: '', startKey: '' };
+
+  if (match[7] === 'Z') {
+    const dateObj = new Date(Date.UTC(
+      Number(match[1]), Number(match[2]) - 1, Number(match[3]),
+      Number(match[4]), Number(match[5]), Number(match[6])
+    ));
+    const date = Utilities.formatDate(dateObj, CONFIG.TIMEZONE, 'yyyy-MM-dd');
+    const timeLabel = Utilities.formatDate(dateObj, CONFIG.TIMEZONE, 'HH:mm');
+    const startKey = Utilities.formatDate(dateObj, CONFIG.TIMEZONE, "yyyy-MM-dd'T'HH:mm:ss");
+    return { date: date, timeLabel: timeLabel, startKey: startKey };
+  }
+
+  /* 無 Z：當成日曆本地時間（本站為 Asia/Taipei） */
+  const date = match[1] + '-' + match[2] + '-' + match[3];
+  const timeLabel = match[4] + ':' + match[5];
+  return {
+    date: date,
+    timeLabel: timeLabel,
+    startKey: date + 'T' + match[4] + ':' + match[5] + ':' + match[6]
+  };
 }
 
 function getSheet_(name) {
@@ -477,6 +818,45 @@ function normalizeRecord_(entity, p) {
       href: String(p.href || ''),
       visible: toBool_(p.visible),
       sort_order: Number(p.sort_order || 0)
+    };
+  }
+  if (entity === 'videos') {
+    const url = String(p.url || '').trim();
+    if (!extractYoutubeId_(url)) {
+      throw new Error('請貼上有效的 YouTube 網址（例如 https://www.youtube.com/watch?v=… 或 https://youtu.be/…）');
+    }
+    return {
+      id,
+      date: String(p.date || ''),
+      title: String(p.title || ''),
+      url: url,
+      visible: toBool_(p.visible),
+      sort_order: Number(p.sort_order || 0)
+    };
+  }
+  if (entity === 'calendars') {
+    const url = String(p.url || '').trim();
+    if (!toCalendarIcsUrl_(url)) {
+      throw new Error('請貼上 Google 日曆「嵌入」網址（…/calendar/embed?src=…）或公開 iCal（…/basic.ics）');
+    }
+    return {
+      id,
+      label: String(p.label || ''),
+      url: url,
+      visible: toBool_(p.visible),
+      sort_order: Number(p.sort_order || 0)
+    };
+  }
+  if (entity === 'subjects') {
+    const def = SUBJECT_PAGE_DEFS.filter(item => item.id === id)[0];
+    return {
+      id,
+      label: String(p.label || (def && def.label) || id),
+      href: String(p.href || (def && def.href) || ''),
+      visible: toBool_(p.visible),
+      hero_sub: String(p.hero_sub || '').trim().slice(0, 200),
+      hero_intro: String(p.hero_intro || '').trim().slice(0, 600),
+      sort_order: Number(p.sort_order || (def && def.sort_order) || 0)
     };
   }
   if (entity === 'siteLinks') {

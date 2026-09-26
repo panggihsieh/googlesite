@@ -6,8 +6,9 @@
 
 - Google 帳號登入
 - 白名單只允許 `teacher.hsieh@gmail.com`
-- 管理「今日學習」
-- 管理「最新消息」
+- 管理「今日學習」（手動課表備援）
+- 管理「課表日曆」（最多 5 組 Google 日曆 embed，勾選啟用）
+- 管理「最新影片」
 - 管理「快速連結」
 - 管理「後台連結管理」（前台導覽列與頁尾連結）
 - 管理「後台設定」（網站基本資料輸入欄位）
@@ -27,10 +28,12 @@ Spreadsheet ID：
 工作表：
 
 - `today_learning`
+- `calendar_feeds`（課表日曆：最多 5 組 Google 日曆 embed；`visible`＝啟用）
 - `news`
 - `quick_links`
 - `site_links`（後台連結管理：導覽列／頁尾連結）
 - `settings`（後台設定：key／value，網站基本資料）
+- `videos`（最新影片）
 
 > 缺少任何一個工作表時，`gas/Code.gs` 會自動建立並寫入標題列（`CONFIG.SHEET_HEADERS`），
 > 因此不必手動建分頁；若既有分頁的標題列有缺欄位，請自行補上欄位名稱。

@@ -3,13 +3,13 @@
  * -----------------------------------------------------------------------------
  * 這個檔案是 GitHub 上的靜態內容：頁面載入時會先顯示這裡的資料，
  * 接著由 js/backend.js 與後台（Google Sheet + Apps Script）連線，
- * 以後台最新資料覆寫「今日學習／最新消息／快速連結」。
+ * 以後台最新資料覆寫「今日學習／最新影片／快速連結」。
  * 連不到後台（離線、API 逾時）時，就會維持這裡的內容，網站仍可正常瀏覽。
  *
  * 老師平時請直接到後台 ⚙️ 修改內容；只有在後台無法使用、需要臨時替換時才改這裡。
  *
  * 修改方式：
- *   1. 新增消息 → 在 SITE_DATA.news 陣列最前面加一筆
+ *   1. 新增影片 → 在 SITE_DATA.videos 陣列最前面加一筆（含 YouTube url）
  *   2. 調整課程 → 修改 SITE_DATA.today.courses
  *   3. 換連結   → 修改 SITE_DATA.quickLinks
  *   4. 頁面內容 → 修改 SITE_DATA.pages.<頁面代號>
@@ -135,13 +135,23 @@ const SITE_DATA = {
     cta: { label: "開始今天的學習", href: "pages/chinese.html" }
   },
 
-  /* --- 最新消息 ---------------------------------------------------------- */
-  news: [
-    { date: "08/28", tag: "公告", title: "大南老邦教學網正式上線！", href: "pages/works.html" },
-    { date: "08/27", tag: "活動", title: "校園植物觀察活動開始報名", href: "pages/env.html" },
-    { date: "08/25", tag: "教材", title: "五下國語第 5 課教材已更新", href: "pages/chinese.html" },
-    { date: "08/22", tag: "作品", title: "學生 3D 設計作品展示區上架", href: "pages/works.html" },
-    { date: "08/20", tag: "社團", title: "AI 科技社團開始招生", href: "pages/ai.html" }
+  /* --- 最新影片（靜態備援；後台 videos 有資料時覆寫；顯示數量見後台 videos_limit／site-config.videosLimit） --- */
+  videos: [
+    {
+      date: "2026-09-26",
+      title: "認識大南老邦教學網",
+      url: "https://www.youtube.com/watch?v=M7lc1UVf-VE"
+    },
+    {
+      date: "2026-09-20",
+      title: "校園探索與學習分享",
+      url: "https://www.youtube.com/watch?v=aqz-KE-bpKQ"
+    },
+    {
+      date: "2026-09-15",
+      title: "數位學習小提醒",
+      url: "https://www.youtube.com/watch?v=YE7VzlLtp-4"
+    }
   ],
 
   /* --- 快速連結 ---------------------------------------------------------- */
@@ -161,7 +171,7 @@ const SITE_DATA = {
      後台「後台連結管理」若有 area=footer 的資料，前台頁尾會多一欄（依 group 分組），
      不需要在靜態檔維護那些連結。 */
   footer: {
-    note: "本網站以 HTML / CSS / JavaScript 靜態建置，透過 iframe 嵌入 Google Sites。內容由後台（Google Sheet + Apps Script）同步，瀏覽不需要登入。"
+    note: "本網站以 HTML / CSS / JavaScript 靜態建置，部署於 GitHub Pages。內容由後台（Google Sheet + Apps Script）同步；教材檔放 Google Drive。瀏覽不需要登入。"
   },
 
   /* --- 各主題頁內容 ------------------------------------------------------ */

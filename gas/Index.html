@@ -8,9 +8,9 @@
   <!--
     後台管理畫面（依設計圖 admin.png 的內容與風格建立）
       登入頁：大南老邦教學網／Da-Nan Elementary School／後台管理系統／管理者登入／Google 帳號／登入狀態
-      側邊選單：首頁儀表板、今日學習、最新消息、快速連結、使用說明、網站預覽
+      側邊選單：首頁儀表板、今日學習、最新影片、快速連結、使用說明、網站預覽
       儀表板：歡迎回來！／統計卡＋前往管理／快速操作
-      管理頁：今日學習管理、最新消息管理、快速連結管理（表格＋顯示切換＋新增／編輯／刪除）
+      管理頁：今日學習管理、最新影片管理、快速連結管理（表格＋顯示切換＋新增／編輯／刪除）
     後續新增模組時，請沿用同一套版面、色票（:root 變數）與 .panel／.summary-card／.table 樣式。
   -->
   <style>
@@ -159,7 +159,7 @@
         <h1>大南老邦教學網</h1>
         <p class="auth-en">Da-Nan Elementary School</p>
         <span class="auth-tag">🌿 後台管理系統</span>
-        <p class="auth-lead">登入後即可管理今日學習、最新消息、快速連結與網站設定</p>
+        <p class="auth-lead">登入後即可管理今日學習、最新影片、快速連結與網站設定</p>
       </div>
 
       <div class="login-card">
@@ -195,7 +195,7 @@
         <h2>使用說明</h2>
         <ul class="help-list">
           <li>請先在瀏覽器登入 Google 帳號，再開啟本後台網址；白名單帳號為 <strong id="authHelpEmail"></strong>。</li>
-          <li>登入後可管理「今日學習」「最新消息」「快速連結」「後台連結管理」與「後台設定」，儲存後前台（GitHub Pages 與 Google Sites 嵌入版）會自動同步。</li>
+          <li>登入後可管理「今日學習」「最新影片」「快速連結」「後台連結管理」與「後台設定」，儲存後前台（GitHub Pages）會自動同步。</li>
           <li>「顯示」開關可暫時隱藏資料，不必刪除。</li>
           <li>新增資料的日期預設值使用<strong>後台時間</strong>（Asia/Taipei），不受電腦時間影響。</li>
         </ul>
@@ -210,7 +210,9 @@
       <nav class="nav" aria-label="後台主選單">
         <button type="button" data-view="dashboard" class="active" onclick="showView('dashboard',this)">🏠 首頁儀表板</button>
         <button type="button" data-view="today" onclick="showView('today',this)">📘 今日學習</button>
-        <button type="button" data-view="news" onclick="showView('news',this)">📢 最新消息</button>
+        <button type="button" data-view="calendars" onclick="showView('calendars',this)">📅 課表日曆</button>
+        <button type="button" data-view="videos" onclick="showView('videos',this)">🎬 最新影片</button>
+        <button type="button" data-view="subjects" onclick="showView('subjects',this)">📝 主題頁編輯</button>
         <button type="button" data-view="links" onclick="showView('links',this)">🔗 快速連結</button>
         <button type="button" data-view="siteLinks" onclick="showView('siteLinks',this)">🔖 後台連結管理</button>
         <button type="button" data-view="settings" onclick="showView('settings',this)">⚙️ 後台設定</button>
@@ -220,7 +222,6 @@
         <span class="nav-label">系統</span>
         <button type="button" class="nav-item" data-view="help" onclick="showView('help',this)">📖 使用說明</button>
         <a class="nav-item" id="navPreview" href="#" target="_blank" rel="noopener">🌐 網站預覽（前台首頁）</a>
-        <a class="nav-item" id="navSites" href="#" target="_blank" rel="noopener">📄 Google Sites 網站</a>
       </div>
     </aside>
 
@@ -244,7 +245,7 @@
       <section id="view-dashboard">
         <div class="welcome">
           <h2>歡迎回來！</h2>
-          <p>這裡是大南老邦的內容管理後台。在這裡新增或修改的內容，會經由公開資料 API 同步到前台網站與 Google Sites 嵌入版。</p>
+          <p>這裡是大南老邦的內容管理後台。在這裡新增或修改的內容，會經由公開資料 API 同步到 GitHub Pages 前台。</p>
         </div>
 
         <div class="summary">
@@ -255,10 +256,22 @@
             <button class="go" type="button" onclick="gotoView('today')">前往管理 →</button>
           </div>
           <div class="summary-card">
-            <span class="head">📢 最新消息</span>
-            <b id="countNews" class="green">0</b>
-            <span class="unit">筆公告資料</span>
-            <button class="go" type="button" onclick="gotoView('news')">前往管理 →</button>
+            <span class="head">📅 課表日曆</span>
+            <b id="countCalendars" class="teal">0</b>
+            <span class="unit">組日曆網址（最多 5）</span>
+            <button class="go" type="button" onclick="gotoView('calendars')">前往管理 →</button>
+          </div>
+          <div class="summary-card">
+            <span class="head">🎬 最新影片</span>
+            <b id="countVideos" class="green">0</b>
+            <span class="unit">筆 YouTube 影片</span>
+            <button class="go" type="button" onclick="gotoView('videos')">前往管理 →</button>
+          </div>
+          <div class="summary-card">
+            <span class="head">📝 主題頁編輯</span>
+            <b id="countSubjects" class="teal">0</b>
+            <span class="unit">個主題可在前台編輯</span>
+            <button class="go" type="button" onclick="gotoView('subjects')">前往管理 →</button>
           </div>
           <div class="summary-card">
             <span class="head">🔗 快速連結</span>
@@ -289,13 +302,23 @@
             <div class="card-grid">
               <div class="action-card">
                 <span class="title">📘 新增今日學習</span>
-                <p>設定日期、節次、領域與課程連結，儲存後立即同步到前台「今日學習」面板。</p>
+                <p>手動課表備援：當天日曆沒有行程時，才會顯示這裡的資料。</p>
                 <button class="btn btn-primary" type="button" onclick="openCreate('today')">＋ 新增今日學習</button>
               </div>
               <div class="action-card">
-                <span class="title">📢 新增最新消息</span>
-                <p>發布公告、活動或教材更新訊息，可設定分類與顯示開關。</p>
-                <button class="btn btn-primary" type="button" onclick="openCreate('news')">＋ 新增最新消息</button>
+                <span class="title">📅 管理課表日曆</span>
+                <p>最多 5 組 Google 日曆 embed 網址；勾選啟用後，當天行程會同步到前台「今日學習」。</p>
+                <button class="btn btn-primary" type="button" onclick="gotoView('calendars')">📅 前往課表日曆</button>
+              </div>
+              <div class="action-card">
+                <span class="title">🎬 新增最新影片</span>
+                <p>貼上 YouTube 網址與標題；顯示幾支可在「後台設定」調整（預設 3）。</p>
+                <button class="btn btn-primary" type="button" onclick="openCreate('videos')">＋ 新增最新影片</button>
+              </div>
+              <div class="action-card">
+                <span class="title">📝 主題頁編輯狀態</span>
+                <p>勾選主題為「可編輯」後，前台該頁麵包屑旁會出現 ✏️，點了開此後台編輯頁。</p>
+                <button class="btn btn-primary" type="button" onclick="gotoView('subjects')">📝 前往主題頁編輯</button>
               </div>
               <div class="action-card">
                 <span class="title">🔗 新增快速連結</span>
@@ -318,7 +341,9 @@
       </section>
 
       <section id="view-today" class="hidden"></section>
-      <section id="view-news" class="hidden"></section>
+      <section id="view-calendars" class="hidden"></section>
+      <section id="view-videos" class="hidden"></section>
+      <section id="view-subjects" class="hidden"></section>
       <section id="view-links" class="hidden"></section>
       <section id="view-siteLinks" class="hidden"></section>
       <section id="view-settings" class="hidden"></section>
@@ -334,22 +359,33 @@
  * 日期預設值使用後台時間（getServerTime），不使用瀏覽器時間。
  * ========================================================================= */
 const INITIAL_USER = <?!= initialUser ?>;
+const INITIAL_EDIT = <?!= initialEdit ?>;
 
 /* 前台網址（側邊選單「網站預覽」與登入頁連結用） */
 const SITE_HOME = 'https://panggihsieh.github.io/googlesite/';
-const SITES_HOME = 'https://sites.google.com/view/dana-edu/';
 
 const VIEW_TITLES = {
   dashboard: '首頁儀表板',
   today: '今日學習管理',
-  news: '最新消息管理',
+  calendars: '課表日曆管理',
+  videos: '最新影片管理',
+  subjects: '主題頁編輯',
   links: '快速連結管理',
   siteLinks: '後台連結管理',
   settings: '後台設定',
   help: '使用說明'
 };
 
-const state = { user: INITIAL_USER, today: [], news: [], links: [], siteLinks: [], settings: {}, settingsFields: [], clock: null };
+const SUBJECT_PREVIEW = {
+  chinese: SITE_HOME + 'pages/chinese.html',
+  math: SITE_HOME + 'pages/math.html',
+  env: SITE_HOME + 'pages/env.html',
+  ai: SITE_HOME + 'pages/ai.html',
+  tasks: SITE_HOME + 'pages/tasks.html',
+  works: SITE_HOME + 'pages/works.html'
+};
+
+const state = { user: INITIAL_USER, today: [], calendars: [], videos: [], subjects: [], links: [], siteLinks: [], settings: {}, settingsFields: [], clock: null };
 
 document.addEventListener('DOMContentLoaded', init);
 
@@ -374,9 +410,7 @@ function applyStaticLinks(){
     if(el) el.href = SITE_HOME;
   });
   const navPreview = document.getElementById('navPreview');
-  const navSites = document.getElementById('navSites');
   if(navPreview) navPreview.href = SITE_HOME;
-  if(navSites) navSites.href = SITES_HOME;
 }
 
 function showAuthScreen(){
@@ -395,7 +429,7 @@ function showAuthScreen(){
     ? '此 Google 帳號沒有後台權限，請改用白名單帳號重新登入。'
     : '尚未取得登入帳號。請先在瀏覽器登入 Google 帳號，再開啟此後台網址。';
   message.classList.remove('hidden');
-  note.textContent = '登入後即可管理今日學習、最新消息、快速連結、後台連結與網站設定，並可從側邊選單預覽前台網站。';
+  note.textContent = '登入後即可管理今日學習、最新影片、快速連結、後台連結與網站設定，並可從側邊選單預覽前台網站。';
   if(helpEmail) helpEmail.textContent = 'teacher.hsieh@gmail.com';
 }
 
@@ -442,6 +476,10 @@ function loadData(){
       Object.assign(state,data);
       setStatus('');
       renderAll();
+      if(INITIAL_EDIT){
+        gotoView('subjects');
+        openEdit('subjects', INITIAL_EDIT);
+      }
     })
     .withFailureHandler(showError)
     .getBootstrapData();
@@ -449,12 +487,18 @@ function loadData(){
 
 function renderAll(){
   document.getElementById('countToday').textContent = state.today.length;
-  document.getElementById('countNews').textContent = state.news.length;
+  const countCal = document.getElementById('countCalendars');
+  if(countCal) countCal.textContent = (state.calendars||[]).length;
+  document.getElementById('countVideos').textContent = (state.videos||[]).length;
+  const countSub = document.getElementById('countSubjects');
+  if(countSub) countSub.textContent = (state.subjects||[]).filter(r=>truthy(r.visible)).length;
   document.getElementById('countLinks').textContent = state.links.length;
   document.getElementById('countSiteLinks').textContent = (state.siteLinks||[]).length;
   renderCountSettings();
   renderTable('today');
-  renderTable('news');
+  renderTable('calendars');
+  renderTable('videos');
+  renderSubjects();
   renderTable('links');
   renderTable('siteLinks');
   renderSettings();
@@ -462,7 +506,7 @@ function renderAll(){
 
 /* ---------- 畫面切換 ---------- */
 function showView(name,btn){
-  ['dashboard','today','news','links','siteLinks','settings','help'].forEach(v=>{
+  ['dashboard','today','calendars','videos','subjects','links','siteLinks','settings','help'].forEach(v=>{
     const view = document.getElementById('view-'+v);
     if(view) view.classList.toggle('hidden', v!==name);
   });
@@ -470,6 +514,7 @@ function showView(name,btn){
   if(btn) btn.classList.add('active');
   document.getElementById('pageTitle').textContent = VIEW_TITLES[name] || '首頁儀表板';
   if(name==='help') renderHelp();
+  if(name==='subjects') renderSubjects();
 }
 
 function gotoView(name){
@@ -486,12 +531,14 @@ function renderHelp(){
       <div class="panel-body">
         <ul class="help-list">
           <li><strong>登入</strong>：本後台以 Google 帳號白名單控管，僅 <strong>teacher.hsieh@gmail.com</strong> 可以進入。</li>
-          <li><strong>四個資料模組</strong>：今日學習（課表）、最新消息（公告）、快速連結、後台連結管理（導覽列／頁尾連結）；每一列都可以編輯、刪除，或切換「顯示」。</li>
+          <li><strong>資料模組</strong>：今日學習、課表日曆、最新影片、<strong>主題頁編輯</strong>（勾選可編輯 → 前台出現 ✏️）、快速連結、後台連結管理。</li>
+          <li><strong>主題頁編輯</strong>：勾選「可編輯」後，前台該主題麵包屑旁會出現 ✏️；點 ✏️ 會開此後台並帶入該主題（網址 <code>?edit=chinese</code>）。可改副標與簡介；學習重點／資源／任務仍可由 GitHub 靜態檔維護。</li>
+          <li><strong>日曆活動標題</strong>：建議寫成「科目｜課程名稱」（例如 <code>國語｜高明說話</code>），前台會拆成科目徽章與標題。</li>
           <li><strong>後台連結管理</strong>：位置選「導覽列」會與網站內建選單合併（同名覆寫、新項目附加在後）；選「頁尾」則會在前台頁尾多一欄「相關連結」（可用「分組」分成多欄）。</li>
           <li><strong>後台設定</strong>：用輸入欄位修改網站名稱、學校、標語、頁尾說明與嵌入版 Hero 文案／關鍵字；欄位留空＝沿用網站內建內容，儲存後同步前台。</li>
-          <li><strong>同步方式</strong>：儲存後會清除公開資料快取，前台（GitHub Pages、Google Sites 嵌入版）重新整理即為最新內容。</li>
+          <li><strong>同步方式</strong>：儲存後會清除公開資料快取，前台（GitHub Pages）重新整理即為最新內容。</li>
           <li><strong>時間</strong>：新增資料的日期預設值使用後台時間（Asia/Taipei），不受電腦時間影響。</li>
-          <li><strong>網站預覽</strong>：左側「系統」區可直接開啟前台首頁與 Google Sites 網站。</li>
+          <li><strong>網站預覽</strong>：左側「系統」區可直接開啟前台首頁。</li>
         </ul>
       </div>
     </div>`;
@@ -500,13 +547,26 @@ function renderHelp(){
 function tableConfig(entity){
   if(entity==='today') return {
     title:'今日學習管理',
-    hint:'前台「今日學習」面板的課程內容，依「排序」顯示；關閉「顯示」即不會出現在前台。',
+    hint:'手動課表備援。當天若「課表日曆」有啟用中的行程，前台會優先顯示日曆；日曆沒有行程時才用這裡。',
+    toggleLabel:'顯示',
     columns:[{key:'period',label:'節次'},{key:'subject',label:'領域'},{key:'title',label:'課程名稱'},{key:'date',label:'日期'}]
   };
-  if(entity==='news') return {
-    title:'最新消息管理',
-    hint:'前台「最新消息」面板的公告內容，日期格式建議 MM/DD。',
-    columns:[{key:'date',label:'日期'},{key:'title',label:'標題'},{key:'tag',label:'分類'}]
+  if(entity==='calendars') return {
+    title:'課表日曆管理',
+    hint:'最多 5 組。請貼 Google 日曆「嵌入」網址（…/calendar/embed?src=…）；勾選「啟用」後才會抓當天行程。伺服器會自動轉成公開 iCal。活動標題建議「科目｜課程名稱」。',
+    toggleLabel:'啟用',
+    columns:[{key:'label',label:'名稱'},{key:'url',label:'日曆網址'},{key:'sort_order',label:'排序'}]
+  };
+  if(entity==='videos') return {
+    title:'最新影片管理',
+    hint:'前台「最新影片」面板會依日期新→舊自動嵌入；顯示幾支請到「⚙️ 後台設定 → 最新影片顯示數量」（1～6，預設 3）。請貼完整 YouTube 網址（watch／youtu.be／shorts 皆可）。',
+    columns:[{key:'date',label:'日期'},{key:'title',label:'標題'},{key:'url',label:'YouTube 網址'}]
+  };
+  if(entity==='subjects') return {
+    title:'主題頁編輯',
+    hint:'勾選「可編輯」後，前台該主題麵包屑旁會出現 ✏️，點了開此編輯頁。可改副標與簡介。',
+    toggleLabel:'可編輯',
+    columns:[{key:'label',label:'主題'},{key:'hero_sub',label:'副標'},{key:'hero_intro',label:'簡介'}]
   };
   if(entity==='links') return {
     title:'快速連結管理',
@@ -535,8 +595,17 @@ function formatCell(value,type){
 }
 
 function renderTable(entity){
+  if(entity==='subjects'){
+    renderSubjects();
+    return;
+  }
   const config = tableConfig(entity);
   const rows = state[entity] || [];
+  const toggleLabel = config.toggleLabel || '顯示';
+  const atLimit = entity==='calendars' && rows.length >= 5;
+  const addBtn = atLimit
+    ? '<button class="btn btn-ghost" type="button" disabled title="已達 5 組上限">已滿 5 組</button>'
+    : '<button class="btn btn-primary" type="button" onclick="openCreate(\''+entity+'\')">＋ 新增</button>';
 
   const head = config.columns.map(c=>'<th>'+escapeHtml(c.label)+'</th>').join('');
   const body = rows.length
@@ -554,11 +623,47 @@ function renderTable(entity){
     <div class="panel">
       <div class="panel-head">
         <div><h2>${escapeHtml(config.title)}</h2><div class="unit">${escapeHtml(config.hint)}</div></div>
-        <div class="fab"><button class="btn btn-primary" type="button" onclick="openCreate('${entity}')">＋ 新增</button></div>
+        <div class="fab">${addBtn}</div>
       </div>
       <div class="table-wrap">
         <table class="table">
-          <thead><tr>${head}<th>顯示</th><th>操作</th></tr></thead>
+          <thead><tr>${head}<th>${escapeHtml(toggleLabel)}</th><th>操作</th></tr></thead>
+          <tbody>${body}</tbody>
+        </table>
+      </div>
+    </div>`;
+}
+
+/** 主題頁：固定六項，只開關「可編輯」與編輯副標／簡介 */
+function renderSubjects(){
+  const host = document.getElementById('view-subjects');
+  if(!host) return;
+  const config = tableConfig('subjects');
+  const rows = state.subjects || [];
+  const body = rows.length
+    ? rows.map(r=>{
+        const preview = SUBJECT_PREVIEW[r.id] || (SITE_HOME + (r.href||''));
+        return `<tr>
+          <td><strong>${escapeHtml(r.label||r.id)}</strong><div class="unit">${escapeHtml(r.id)}</div></td>
+          <td>${escapeHtml(formatCell(r.hero_sub))}</td>
+          <td>${escapeHtml(formatCell(r.hero_intro))}</td>
+          <td><input class="toggle" type="checkbox" ${truthy(r.visible)?'checked':''} onchange="setVisible('subjects','${r.id}',this.checked)" title="勾選後前台顯示 ✏️"></td>
+          <td><div class="actions">
+            <button class="icon-btn" type="button" title="編輯此主題" onclick="openEdit('subjects','${r.id}')">✏️</button>
+            <a class="icon-btn" href="${escapeAttr(preview)}" target="_blank" rel="noopener" title="前台預覽">🌐</a>
+          </div></td>
+        </tr>`;
+      }).join('')
+    : `<tr><td colspan="5"><div class="empty">正在載入主題清單…</div></td></tr>`;
+
+  host.innerHTML = `
+    <div class="panel">
+      <div class="panel-head">
+        <div><h2>${escapeHtml(config.title)}</h2><div class="unit">${escapeHtml(config.hint)}</div></div>
+      </div>
+      <div class="table-wrap">
+        <table class="table">
+          <thead><tr><th>主題</th><th>副標</th><th>簡介</th><th>可編輯</th><th>操作</th></tr></thead>
           <tbody>${body}</tbody>
         </table>
       </div>
@@ -566,19 +671,39 @@ function renderTable(entity){
 }
 
 /* ---------- 新增／編輯表單 ---------- */
-function openCreate(entity){ openForm(entity,{}); }
+function openCreate(entity){
+  if(entity==='subjects'){
+    setStatus('主題頁為固定六項，請直接編輯');
+    setTimeout(()=>setStatus(''),1600);
+    return;
+  }
+  if(entity==='calendars' && (state.calendars||[]).length >= 5){
+    setStatus('課表日曆最多 5 組');
+    setTimeout(()=>setStatus(''),1600);
+    return;
+  }
+  openForm(entity,{});
+}
 
 function openEdit(entity,id){
   const row = (state[entity]||[]).find(x=>String(x.id)===String(id));
+  if(entity==='subjects' && !row){
+    setStatus('找不到主題：' + id);
+    setTimeout(()=>setStatus(''),1600);
+    return;
+  }
   openForm(entity,row||{});
 }
 
 function openForm(entity,row){
   const fields = formFields(entity,row);
+  const title = entity==='subjects'
+    ? ('編輯「' + (row.label || row.id || '主題') + '」')
+    : ((row.id?'編輯':'新增') + ' ' + tableConfig(entity).title.replace('管理',''));
   document.getElementById('modalRoot').innerHTML = `
     <div class="modal-backdrop" onclick="if(event.target===this)closeModal()">
       <div class="modal">
-        <h3>${row.id?'編輯':'新增'} ${tableConfig(entity).title.replace('管理','')}</h3>
+        <h3>${escapeHtml(title)}</h3>
         <form id="editForm" onsubmit="submitForm(event,'${entity}')">
           <input type="hidden" name="id" value="${escapeAttr(row.id||'')}">
           <div class="form-grid">${fields}</div>
@@ -619,14 +744,42 @@ function formFields(entity,r){
     check('visible','顯示',r.visible!==false)
   ].join('');
 
-  if(entity==='news') return [
-    input('date','日期',r.date||todayMd()),
-    input('tag','分類',r.tag||'公告'),
-    input('sort_order','排序',r.sort_order||1,'number'),
+  if(entity==='videos') return [
+    input('date','日期',r.date||todayIso(),'date'),
+    input('sort_order','排序（同日用）',r.sort_order||1,'number'),
     check('visible','顯示',r.visible!==false),
     input('title','標題',r.title||'','text',true),
-    input('href','連結',r.href||'','text',true)
+    input('url','YouTube 網址',r.url||'https://www.youtube.com/watch?v=','url',true)
   ].join('');
+
+  if(entity==='calendars') return [
+    input('label','名稱（選填）',r.label||'課表日曆'),
+    input('sort_order','排序',r.sort_order||((state.calendars||[]).length+1),'number'),
+    check('visible','啟用',r.visible!==false),
+    input('url','日曆 embed 網址',r.url||'https://calendar.google.com/calendar/embed?src=','url',true)
+  ].join('');
+
+  if(entity==='subjects'){
+    const preview = SUBJECT_PREVIEW[r.id] || SITE_HOME;
+    const optional=(name,label,value='',type='text',full=false)=>`
+      <div class="field ${full?'full':''}"><label>${label}</label>
+        <input name="${name}" type="${type}" value="${escapeAttr(value??'')}">
+      </div>`;
+    const area=(name,label,value='')=>`
+      <div class="field full"><label>${label}</label>
+        <textarea name="${name}" rows="3">${escapeHtml(value??'')}</textarea>
+      </div>`;
+    return [
+      `<div class="field full"><label>主題</label><div><strong>${escapeHtml(r.label||r.id)}</strong> <span class="unit">${escapeHtml(r.id||'')}</span></div>
+        <div class="unit" style="margin-top:6px"><a href="${escapeAttr(preview)}" target="_blank" rel="noopener">開啟前台預覽 ↗</a></div></div>`,
+      check('visible','可編輯（前台顯示 ✏️）',truthy(r.visible)),
+      optional('hero_sub','頁面副標（例如：課文 • 生字 • 成語 • 閱讀理解）',r.hero_sub||'','text',true),
+      area('hero_intro','頁面簡介',r.hero_intro||''),
+      `<input type="hidden" name="label" value="${escapeAttr(r.label||'')}">`,
+      `<input type="hidden" name="href" value="${escapeAttr(r.href||'')}">`,
+      `<input type="hidden" name="sort_order" value="${escapeAttr(r.sort_order||1)}">`
+    ].join('');
+  }
 
   if(entity==='siteLinks') return [
     select('area','位置',[{value:'nav',label:'導覽列'},{value:'footer',label:'頁尾'}], r.area||'nav'),
@@ -738,7 +891,7 @@ function renderSettings(){
       </div>
       <div class="panel-body">
         ${body}
-        <div class="notice" style="margin-top:18px">首頁橫幅是設計圖（文字已畫在圖上），所以「首頁橫幅標題／副標／學習關鍵字」套用在 Google Sites 嵌入版；儲存後前台（GitHub Pages、嵌入版）重新整理即為最新內容。</div>
+        <div class="notice" style="margin-top:18px">首頁橫幅若為設計圖（文字已畫在圖上），「首頁橫幅標題／副標／學習關鍵字」主要供後台與其他文案區塊使用；儲存後前台重新整理即為最新內容。</div>
       </div>
     </form>`;
 }

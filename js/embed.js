@@ -12,6 +12,19 @@
   /* 內建網站資料的快照：後台「後台設定」（公開 API 的 settings）會覆寫 site 欄位 */
   var STATIC_SITE = Object.assign({}, site);
 
+  var videosLimit = parseVideosLimit(
+    (window.DANA_SITE_CONFIG && window.DANA_SITE_CONFIG.videosLimit) || 3,
+    3
+  );
+
+  function parseVideosLimit(value, fallback) {
+    var n = parseInt(String(value == null ? "" : value).trim(), 10);
+    if (!isFinite(n)) return fallback;
+    if (n < 1) return 1;
+    if (n > 6) return 6;
+    return n;
+  }
+
   function esc(value) {
     return String(value == null ? "" : value)
       .replace(/&/g, "&amp;")
@@ -102,24 +115,65 @@
       .join("");
   }
 
-  function renderNews() {
-    var host = document.getElementById("news-list");
+  function youtubeId(url) {
+    var match = String(url || "")
+      .trim()
+      .match(
+        /(?:youtu\.be\/|youtube\.com\/(?:watch\?(?:[^#]*&)?v=|embed\/|shorts\/|live\/))([A-Za-z0-9_-]{11})/
+      );
+    return match ? match[1] : "";
+  }
+
+  function videoDateLabel(date) {
+    var text = String(date || "").trim();
+    var match = text.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (match) return match[2] + "/" + match[3];
+    return text;
+  }
+
+  function renderVideos() {
+    var host = document.getElementById("video-list");
     if (!host) return;
 
-    host.innerHTML = (DATA.news || [])
-      .slice(0, 5)
-      .map(function (n) {
-        return (
-          "<li>" +
-          '<span class="news-date">' + esc(n.date) + "</span>" +
-          '<span class="news-body">' +
-          '<a class="news-title" href="' + esc(siteHref(n.href)) + '">' + esc(n.title) + "</a>" +
-          '<span class="tag">' + esc(n.tag) + "</span>" +
-          "</span>" +
-          "</li>"
-        );
+    var videos = (DATA.videos || [])
+      .map(function (v) {
+        var id = v.youtubeId || youtubeId(v.url);
+        return id ? Object.assign({}, v, { youtubeId: id }) : null;
       })
-      .join("");
+      .filter(Boolean)
+      .slice()
+      .sort(function (a, b) {
+        var dateA = String(a.date || "");
+        var dateB = String(b.date || "");
+        if (dateA !== dateB) return dateB.localeCompare(dateA);
+        return Number(a.sort_order || 0) - Number(b.sort_order || 0);
+      })
+      .slice(0, videosLimit);
+
+    host.innerHTML = videos.length
+      ? videos
+          .map(function (v) {
+            var embed =
+              "https://www.youtube-nocookie.com/embed/" +
+              encodeURIComponent(v.youtubeId) +
+              "?rel=0";
+            return (
+              "<li>" +
+              '<div class="video-meta">' +
+              '<span class="video-date">' + esc(videoDateLabel(v.date)) + "</span>" +
+              '<a class="video-title" href="' + esc(v.url || embed) + '" target="_blank" rel="noopener">' +
+              esc(v.title || "YouTube 影片") +
+              "</a>" +
+              "</div>" +
+              '<div class="video-frame">' +
+              '<iframe src="' + esc(embed) + '" title="' + esc(v.title || "YouTube 影片") +
+              '" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>' +
+              "</div>" +
+              "</li>"
+            );
+          })
+          .join("")
+      : '<li class="video-empty">目前尚無影片</li>';
   }
 
   function renderQuickLinks() {
@@ -149,7 +203,7 @@
 
   function renderDynamicSections() {
     renderToday();
-    renderNews();
+    renderVideos();
     renderQuickLinks();
   }
 
@@ -194,6 +248,12 @@
       }
     }
 
+    var limitText = String(settings.videos_limit == null ? "" : settings.videos_limit).trim();
+    if (limitText) {
+      videosLimit = parseVideosLimit(limitText, videosLimit);
+      changed = true;
+    }
+
     if (!changed) return false;
 
     DATA.site = site;
@@ -211,7 +271,7 @@
     if (!remote || remote.ok !== true) return false;
 
     if (remote.today) DATA.today = remote.today;
-    if (Array.isArray(remote.news)) DATA.news = remote.news;
+    if (Array.isArray(remote.videos) && remote.videos.length) DATA.videos = remote.videos;
     if (Array.isArray(remote.quickLinks)) DATA.quickLinks = remote.quickLinks;
     if (remote.settings && typeof remote.settings === "object") applySiteSettings(remote.settings);
 
