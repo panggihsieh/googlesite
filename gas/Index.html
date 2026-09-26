@@ -119,6 +119,9 @@
     .notice{background:var(--blue-soft);border:1px solid #cfe6ff;color:#1c4f8a;border-radius:12px;
       padding:12px 14px;margin-bottom:16px;font-weight:700}
     .notice.error{background:#fff0f1;border-color:#ffd3da;color:#c9364f}
+    .notice.warn{background:#fff8eb;border-color:#ffe0a3;color:#8a5a00}
+    .notice.ok{background:#eefaf1;border-color:#b7e4c3;color:#1b6b3a}
+    .notice ul{margin:8px 0 0;padding-left:1.2em;font-weight:600;line-height:1.7}
     .help-list{margin:0;padding-left:20px;line-height:1.95}
     .help-list li{margin-bottom:6px}
 
@@ -736,7 +739,7 @@ function tableConfig(entity){
   };
   if(entity==='calendars') return {
     title:'課表日曆管理',
-    hint:'最多 5 組。請貼 Google 日曆「嵌入」網址（…/calendar/embed?src=…）；勾選「啟用」後，前台「本週課程」會自動抓取當週（星期日～星期六，台北時間）行程並列出。伺服器會自動轉成公開 iCal。活動標題建議「科目｜課程名稱」。',
+    hint:'最多 5 組。請貼 Google 日曆「嵌入」網址（…/calendar/embed?src=…）；勾選「啟用」後，前台「本週課程」會抓取當週（日～六）公開 iCal。活動標題建議「科目｜課程名稱」。若公開 ICS 沒有行程，前台會退回「今日學習」Sheet 備援。',
     toggleLabel:'啟用',
     columns:[{key:'label',label:'名稱'},{key:'url',label:'日曆網址'},{key:'sort_order',label:'排序'}]
   };
@@ -789,6 +792,9 @@ function renderTable(entity){
   const addBtn = atLimit
     ? '<button class="btn btn-ghost" type="button" disabled title="已達 5 組上限">已滿 5 組</button>'
     : '<button class="btn btn-primary" type="button" onclick="openCreate(\''+entity+'\')">＋ 新增</button>';
+  const syncBtn = entity==='calendars'
+    ? '<button class="btn btn-ghost" type="button" onclick="refreshCalendarSync()">重新檢查同步</button>'
+    : '';
 
   const head = config.columns.map(c=>'<th>'+escapeHtml(c.label)+'</th>').join('');
   const body = rows.length
@@ -802,12 +808,15 @@ function renderTable(entity){
       </tr>`).join('')
     : `<tr><td colspan="${config.columns.length+2}"><div class="empty">目前沒有資料，請按右上角「＋ 新增」。</div></td></tr>`;
 
+  const syncBanner = entity==='calendars' ? calendarSyncBannerHtml() : '';
+
   document.getElementById('view-'+entity).innerHTML = `
     <div class="panel">
       <div class="panel-head">
         <div><h2>${escapeHtml(config.title)}</h2><div class="unit">${escapeHtml(config.hint)}</div></div>
-        <div class="fab">${addBtn}</div>
+        <div class="fab">${syncBtn}${addBtn}</div>
       </div>
+      ${syncBanner}
       <div class="table-wrap">
         <table class="table">
           <thead><tr>${head}<th>${escapeHtml(toggleLabel)}</th><th>操作</th></tr></thead>
@@ -815,6 +824,38 @@ function renderTable(entity){
         </table>
       </div>
     </div>`;
+}
+
+function calendarSyncBannerHtml(){
+  const sync = state.calendarSync;
+  if(!sync){
+    return '<div class="notice warn">尚未取得日曆同步狀態，請按「重新檢查同步」。</div>';
+  }
+  const usingCalendar = sync.frontendSource === 'calendar';
+  const cls = usingCalendar ? 'ok' : 'warn';
+  const headline = usingCalendar
+    ? '前台本週課程來源：Google 日曆（本週 ' + sync.weekEventCount + ' 筆，' + (sync.weekRangeLabel || '') + '）'
+    : '前台本週課程來源：Sheet 備援（公開 ICS 本週 0 筆，區間 ' + (sync.weekRangeLabel || '') + '）';
+  const items = (sync.feeds || []).map(f=>{
+    const name = f.label || f.id || '日曆';
+    const flag = f.visible ? '' : '［未啟用］';
+    return '<li>' + escapeHtml(flag + name + '：' + (f.message || '')) + '</li>';
+  }).join('');
+  return '<div class="notice ' + cls + '">' + escapeHtml(headline) +
+    (items ? '<ul>' + items + '</ul>' : '') +
+    '</div>';
+}
+
+function refreshCalendarSync(){
+  setStatus('正在檢查公開 ICS／本週行程…');
+  google.script.run
+    .withSuccessHandler(res=>{
+      state.calendarSync = (res && res.calendarSync) || null;
+      setStatus('');
+      renderTable('calendars');
+    })
+    .withFailureHandler(showError)
+    .probeCalendarSync();
 }
 
 /** 主題頁：固定六項，只開關「可編輯」與編輯副標／簡介 */

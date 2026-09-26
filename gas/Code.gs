@@ -303,12 +303,101 @@ function getBootstrapData() {
     news: readTable_(CONFIG.SHEETS.NEWS),
     videos: readTable_(CONFIG.SHEETS.VIDEOS),
     calendars: ensureCalendarFeeds_(),
+    calendarSync: probeCalendarSync_(),
     subjects: ensureSubjectPages_(),
     links: readTable_(CONFIG.SHEETS.LINKS),
     siteLinks: readTable_(CONFIG.SHEETS.SITE_LINKS),
     settings: readSettings_(),
     settingsFields: SETTINGS_FIELDS,
     updatedAt: Utilities.formatDate(new Date(), CONFIG.TIMEZONE, 'yyyy-MM-dd HH:mm:ss')
+  };
+}
+
+/** 後台手動重新探測公開 ICS／本週行程數 */
+function probeCalendarSync() {
+  assertAdmin_();
+  return { ok: true, calendarSync: probeCalendarSync_() };
+}
+
+/**
+ * 探測已設定日曆的公開 ICS：總行程數、本週行程數、前台會用 calendar 還是 sheet。
+ * 用於後台狀態列；不寫入快取。
+ */
+function probeCalendarSync_() {
+  const todayIso = getServerTime_().date;
+  const weekRange = getWeekRangeSundaySaturday_(todayIso);
+  const feeds = ensureCalendarFeeds_();
+  const feedReports = [];
+  let weekEventCount = 0;
+
+  feeds.forEach(feed => {
+    const visible = toBool_(feed.visible);
+    const icsUrl = toCalendarIcsUrl_(feed.url);
+    const report = {
+      id: String(feed.id || ''),
+      label: String(feed.label || ''),
+      visible: visible,
+      icsUrl: icsUrl,
+      ok: false,
+      httpStatus: 0,
+      eventTotal: 0,
+      eventInWeek: 0,
+      message: ''
+    };
+
+    if (!visible) {
+      report.message = '未啟用';
+      feedReports.push(report);
+      return;
+    }
+    if (!icsUrl) {
+      report.message = '網址無法轉成公開 iCal（請用 embed?src=… 或 …/basic.ics）';
+      feedReports.push(report);
+      return;
+    }
+
+    try {
+      const response = UrlFetchApp.fetch(icsUrl, {
+        muteHttpExceptions: true,
+        followRedirects: true,
+        headers: { 'User-Agent': 'DanaEduCalendar/1.0' }
+      });
+      report.httpStatus = response.getResponseCode();
+      if (report.httpStatus >= 400) {
+        report.message = 'HTTP ' + report.httpStatus + '（請確認日曆已公開）';
+        feedReports.push(report);
+        return;
+      }
+
+      const events = parseIcsEvents_(response.getContentText());
+      report.eventTotal = events.length;
+      report.eventInWeek = events.filter(function (ev) {
+        return ev.date >= weekRange.start && ev.date <= weekRange.end;
+      }).length;
+      report.ok = true;
+      weekEventCount += report.eventInWeek;
+
+      if (!report.eventTotal) {
+        report.message = '公開 ICS 無任何行程（請在日曆新增活動，並開啟「公開此日曆的詳細資料」）';
+      } else if (!report.eventInWeek) {
+        report.message = '日曆有 ' + report.eventTotal + ' 筆，但本週（' + weekRange.rangeLabel + '）沒有';
+      } else {
+        report.message = '本週 ' + report.eventInWeek + ' 筆（全部 ' + report.eventTotal + '）';
+      }
+    } catch (error) {
+      report.message = String((error && error.message) || error);
+    }
+
+    feedReports.push(report);
+  });
+
+  return {
+    weekStart: weekRange.start,
+    weekEnd: weekRange.end,
+    weekRangeLabel: weekRange.rangeLabel,
+    weekEventCount: weekEventCount,
+    frontendSource: weekEventCount > 0 ? 'calendar' : 'sheet',
+    feeds: feedReports
   };
 }
 
