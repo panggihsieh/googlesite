@@ -1,0 +1,34 @@
+﻿---
+description: 變更完成後立即 git commit/push，gas/ 異動時同步 clasp push/deploy
+alwaysApply: true
+---
+
+# 即時同步提交（大南銘邦教學網）
+
+完成一組可運作的變更後，**立刻**同步，勿等使用者再說「幫我 commit」。
+
+## Git（每次變更集）
+
+1. `git add` 相關檔案（勿加入 secrets：`.env`、憑證、金鑰等）
+2. `git commit`：繁中或中英雙語、聚焦「為什麼」；參考近期訊息風格（例：`前台列出當週日曆行程，並加入主題頁預覽式編輯。`）
+3. `git push` 到 `origin`（目前追蹤分支）
+
+例外：使用者明確說不要提交／不要推送時，跳過。
+
+## GAS（僅當 `gas/` 有變更）
+
+在 `gas/` 目錄執行：
+
+```bash
+clasp push -f
+clasp deploy -i AKfycbz2iBSQqlYOeNbuOrDp72FdzFhBhJEk6QocNep7uwkZrN9amNymcU4ENbFkSWd2PjUo -d "<簡短說明>"
+```
+
+說明用短句即可（日期或變更重點）。
+
+## 安全與品質
+
+- **禁止** `git push --force`／force push 到 main
+- **禁止** `--no-verify` 等跳過 hooks
+- 提交保持聚焦；無關檔案不要塞進同一 commit
+- 工作樹應在同步後保持乾淨（或僅剩使用者刻意保留的未追蹤檔）
