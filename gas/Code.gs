@@ -550,10 +550,11 @@ function ensureSubjectPageHeaders_() {
   const sheet = getSheet_(CONFIG.SHEETS.SUBJECTS);
   const expected = CONFIG.SHEET_HEADERS.subject_pages;
   const lastCol = Math.max(sheet.getLastColumn(), 1);
-  const current = sheet.getRange(1, 1, 1, lastCol).getValues()[0].map(String);
+  const current = sheet.getRange(1, 1, 1, lastCol).getValues()[0].map(String).filter(Boolean);
   const missing = expected.filter(h => current.indexOf(h) < 0);
   if (!missing.length) return;
-  sheet.getRange(1, current.length + 1, 1, current.length + missing.length).setValues([missing]);
+  /* getRange(row, column, numRows, numColumns) — 第四參數是欄數 */
+  sheet.getRange(1, current.length + 1, 1, missing.length).setValues([missing]);
 }
 
 /** 主題頁清單：空表時寫入六大主題（預設不可編輯） */
