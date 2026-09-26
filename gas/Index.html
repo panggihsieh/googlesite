@@ -1265,7 +1265,8 @@ function settingsField(field){
       +hint+'</div>';
   }
 
-  return '<div class="field"><label>'+label+'</label>'
+  const wide = field.key === 'hero_image_url';
+  return '<div class="field'+(wide?' full':'')+'"><label>'+label+'</label>'
     +'<input type="text" name="'+escapeAttr(field.key)+'" value="'+escapeAttr(value)+'"'+placeholder+'>'
     +hint+'</div>';
 }
@@ -1293,7 +1294,7 @@ function renderSettings(){
       <div class="panel-head">
         <div>
           <h2>⚙️ 後台設定</h2>
-          <div class="unit">用輸入欄位修改網站名稱、標語、頁尾說明與嵌入版 Hero 文案；欄位留空＝沿用網站內建內容。</div>
+          <div class="unit">用輸入欄位修改網站名稱、標語、頁尾說明與首頁橫幅背景；欄位留空＝沿用網站內建內容。橫幅標題文字不會跟著背景圖改變。</div>
         </div>
         <div class="fab">
           <button class="btn btn-ghost" type="button" onclick="renderSettings()">還原變更</button>
@@ -1302,7 +1303,7 @@ function renderSettings(){
       </div>
       <div class="panel-body">
         ${body}
-        <div class="notice" style="margin-top:18px">首頁橫幅若為設計圖（文字已畫在圖上），「首頁橫幅標題／副標／學習關鍵字」主要供後台與其他文案區塊使用；儲存後前台重新整理即為最新內容。</div>
+        <div class="notice" style="margin-top:18px">「首頁橫幅背景圖」只換照片。前台會把「大南老邦教學網」等標題固定疊在新圖上。請貼 https 圖片網址，或已開放檢視的 Google Drive 檔案連結。留空則用內建設計圖。</div>
       </div>
     </form>`;
 }

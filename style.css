@@ -912,7 +912,105 @@ button.section-link:hover {
   }
 }
 
-/* 後台管理入口：浮在首頁橫幅右上角，與嵌入版 ⚙️ 同一個 GAS 後台 */
+/* 後台換背景圖時：圖只當背景，標題文字用這層固定疊上 */
+.hero-banner-copy,
+.hero-banner-copy[hidden] {
+  display: none;
+}
+
+.hero-banner.is-custom {
+  min-height: clamp(148px, 22vw, 240px);
+}
+
+.hero-banner.is-custom .hero-banner-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  object-fit: cover;
+  object-position: center right;
+  transform: none;
+}
+
+.hero-banner.is-custom::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(90deg, rgba(226, 244, 255, .94) 0%, rgba(226, 244, 255, .78) 38%, rgba(226, 244, 255, .15) 68%, rgba(226, 244, 255, 0) 82%);
+  pointer-events: none;
+}
+
+.hero-banner.is-custom .hero-banner-copy {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: clamp(148px, 22vw, 240px);
+  padding: 18px clamp(16px, 4vw, 48px);
+  padding-right: 78px;
+}
+
+.hero-banner-copy-main {
+  min-width: 0;
+}
+
+.hero-banner-title {
+  margin: 0;
+  color: #123f7c;
+  font-size: clamp(1.55rem, 3.4vw, 2.7rem);
+  font-weight: 900;
+  letter-spacing: .02em;
+  line-height: 1.15;
+}
+
+.hero-banner-lead {
+  margin: 6px 0 0;
+  color: #1a4f96;
+  font-size: clamp(.95rem, 1.7vw, 1.25rem);
+  font-weight: 800;
+}
+
+.hero-banner-keywords {
+  margin: 8px 0 0;
+  color: #245a9e;
+  font-size: clamp(.85rem, 1.4vw, 1.05rem);
+  font-weight: 700;
+  letter-spacing: .04em;
+}
+
+.hero-banner-script {
+  margin: 0;
+  flex: 0 0 auto;
+  color: #1d5aa8;
+  font-family: "Segoe Script", "Comic Sans MS", "KaiTi", cursive;
+  font-size: clamp(1rem, 1.8vw, 1.35rem);
+  font-weight: 700;
+  line-height: 1.35;
+  transform: rotate(-8deg);
+  text-shadow: 0 0 10px rgba(255, 255, 255, .95), 0 1px 0 #fff;
+}
+
+@media (max-width: 700px) {
+  .hero-banner.is-custom .hero-banner-image {
+    width: 100%;
+  }
+
+  .hero-banner.is-custom .hero-banner-copy {
+    align-items: flex-start;
+    flex-direction: column;
+    padding-right: 84px;
+  }
+
+  .hero-banner-script {
+    transform: none;
+  }
+}
+
+/* 後台管理入口：浮在首頁橫幅右上角，實心圖示以免被照片吃掉 */
 .admin-entry {
   position: absolute;
   top: 14px;
@@ -920,34 +1018,41 @@ button.section-link:hover {
   z-index: 5;
   display: grid;
   place-items: center;
-  width: 44px;
-  height: 44px;
-  border: 1px solid rgba(13, 57, 117, .16);
+  width: 52px;
+  height: 52px;
+  border: 3px solid #fff;
   border-radius: 50%;
-  background: rgba(255, 255, 255, .9);
-  color: #0d3975;
-  font-size: 1.15rem;
-  line-height: 1;
-  box-shadow: var(--shadow-md);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  background: #0b5ed7;
+  color: #fff;
+  line-height: 0;
+  box-shadow: 0 6px 18px rgba(8, 40, 90, .4);
   transition: transform .15s ease, background-color .15s ease, box-shadow .15s ease;
+}
+
+.admin-entry svg {
+  width: 28px;
+  height: 28px;
+  display: block;
 }
 
 .admin-entry:hover,
 .admin-entry:focus-visible {
   transform: translateY(-2px);
-  background: #ffffff;
-  box-shadow: var(--shadow-lg);
+  background: #084298;
+  box-shadow: 0 10px 24px rgba(8, 40, 90, .48);
 }
 
 @media (max-width: 700px) {
   .admin-entry {
     top: 10px;
     right: 12px;
-    width: 40px;
-    height: 40px;
-    font-size: 1.05rem;
+    width: 48px;
+    height: 48px;
+  }
+
+  .admin-entry svg {
+    width: 26px;
+    height: 26px;
   }
 }
 

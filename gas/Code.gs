@@ -63,6 +63,7 @@ const SETTINGS_FIELDS = Object.freeze([
   { key: 'hero_title', label: '首頁橫幅標題', group: '首頁橫幅（Hero）', placeholder: '學習 × 探究 ×', hint: '網站 Hero／品牌相關文案' },
   { key: 'hero_lead', label: '首頁橫幅副標', group: '首頁橫幅（Hero）', type: 'textarea', placeholder: '大南國小高年級數位學習 × AI × 探究實作', hint: 'Hero 副標' },
   { key: 'keywords', label: '學習關鍵字', group: '首頁橫幅（Hero）', type: 'list', placeholder: '閱讀世界、探索自然、擁抱科技、創造未來', hint: '用「、」或逗號分隔' },
+  { key: 'hero_image_url', label: '首頁橫幅背景圖', group: '首頁橫幅（Hero）', placeholder: 'https://… 圖片網址或 Google Drive 檔案連結', hint: '只換背景圖，橫幅上的標題文字維持不變。留空＝使用內建設計圖。圖片請設為知道連結者可檢視。' },
   { key: 'videos_limit', label: '最新影片顯示數量', group: '最新影片', placeholder: '3', hint: '前台「最新影片」面板要嵌入幾支（填 1～6；留空＝3）' }
 ]);
 
@@ -478,13 +479,36 @@ function normalizeSettings_(payload) {
   const settings = {};
   SETTINGS_FIELDS.forEach(field => {
     const raw = source[field.key];
-    settings[field.key] = String(raw === undefined || raw === null ? '' : raw).trim().slice(0, 600);
+    const text = String(raw === undefined || raw === null ? '' : raw).trim();
+    settings[field.key] = field.key === 'hero_image_url'
+      ? normalizeHeroImageUrl_(text)
+      : text.slice(0, 600);
   });
   return settings;
 }
 
 function isSettingsKey_(key) {
   return SETTINGS_FIELDS.some(field => field.key === key);
+}
+
+/** 橫幅背景：只接受 https 圖片網址；Drive 檔案連結轉成可嵌入的縮圖網址。無法辨識則存空字串。 */
+function normalizeHeroImageUrl_(raw) {
+  const value = String(raw || '').trim();
+  if (!value) return '';
+  if (!/^https:\/\//i.test(value)) return '';
+
+  let fileId = '';
+  const fileMatch = value.match(/drive\.google\.com\/file\/d\/([^/?#]+)/i);
+  if (fileMatch) fileId = fileMatch[1];
+  if (!fileId && /drive\.google\.com/i.test(value)) {
+    const idMatch = value.match(/[?&]id=([^&#]+)/i);
+    if (idMatch) fileId = decodeURIComponent(idMatch[1]);
+  }
+  if (fileId) {
+    return 'https://drive.google.com/thumbnail?id=' + encodeURIComponent(fileId) + '&sz=w2000';
+  }
+
+  return value.slice(0, 1500);
 }
 
 function saveRow(entity, payload) {

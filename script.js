@@ -970,6 +970,8 @@
       changed = true;
     }
 
+    applyHeroBannerImage(settings.hero_image_url);
+
     if (!changed) return false;
 
     DATA.site = SITE; // 讓其他讀 DATA.site 的地方也拿到後台設定
@@ -979,6 +981,46 @@
     setupHeaderSearch();
     renderFooter();
     return true;
+  }
+
+  /**
+   * 後台「首頁橫幅背景圖」：有網址就換成該圖，並疊上固定標題文字。
+   * 留空則維持內建設計圖（文字畫在圖上）。
+   */
+  function applyHeroBannerImage(rawUrl) {
+    var img = document.getElementById("hero-banner-image");
+    var banner = img ? img.closest(".hero-banner") : null;
+    var copy = banner ? banner.querySelector(".hero-banner-copy") : null;
+    if (!img || !banner) return;
+
+    var url = normalizeHeroImageUrl(rawUrl);
+    if (!url) {
+      banner.classList.remove("is-custom");
+      if (copy) copy.hidden = true;
+      return;
+    }
+
+    img.src = url;
+    img.alt = "";
+    banner.classList.add("is-custom");
+    if (copy) copy.hidden = false;
+  }
+
+  function normalizeHeroImageUrl(rawUrl) {
+    var value = String(rawUrl || "").trim();
+    if (!/^https:\/\//i.test(value)) return "";
+
+    var fileMatch = value.match(/drive\.google\.com\/file\/d\/([^/?#]+)/i);
+    if (fileMatch) {
+      return "https://drive.google.com/thumbnail?id=" + encodeURIComponent(fileMatch[1]) + "&sz=w2000";
+    }
+    if (/drive\.google\.com/i.test(value)) {
+      var idMatch = value.match(/[?&]id=([^&#]+)/i);
+      if (idMatch) {
+        return "https://drive.google.com/thumbnail?id=" + encodeURIComponent(decodeURIComponent(idMatch[1])) + "&sz=w2000";
+      }
+    }
+    return value;
   }
 
   /** 瀏覽器標題與 og 標籤：把內建網站名稱／標語換成後台設定的內容（找不到就維持原樣） */
