@@ -386,7 +386,10 @@ function probeCalendarSync_() {
         report.message = '本週 ' + report.eventInWeek + ' 筆（全部 ' + report.eventTotal + '）';
       }
     } catch (error) {
-      report.message = String((error && error.message) || error);
+      const detail = String((error && error.message) || error);
+      report.message = /external_request|權限不足/.test(detail)
+        ? '尚未授權外部連線。請重新開啟後台，並允許連到 Google 日曆。'
+        : detail;
     }
 
     feedReports.push(report);
