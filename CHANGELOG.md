@@ -1,5 +1,10 @@
 # CHANGELOG — 大南老邦教學網
 
+## 2026-09-27 — 課表改由發布者的 Google 日曆直接讀取
+
+- 公開 iCal 目前 0 筆，前台才退回 Sheet。現在優先用 `CalendarApp` 讀取帳號裡的日曆（含未公開行程），公開 ICS 只作備援。
+- 新增 `calendar.readonly`。部署後須在指令碼編輯器執行一次並允許日曆權限，後台空白與無法同步才會解除。
+
 ## 2026-09-27 — 課表日曆補上 UrlFetch 外部連線權限
 
 - `appsscript.json` 加入 `script.external_request`，後台與公開 API 才能抓公開 iCal。

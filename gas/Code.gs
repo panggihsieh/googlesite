@@ -351,21 +351,47 @@ function probeCalendarSync_() {
       feedReports.push(report);
       return;
     }
-    if (!icsUrl) {
-      report.message = '網址無法轉成公開 iCal（請用 embed?src=… 或 …/basic.ics）';
+    const calendarId = calendarIdFromUrl_(feed.url);
+    let ownedEvents = null;
+    let ownedError = '';
+    try {
+      ownedEvents = eventsFromCalendarApp_(calendarId, weekRange.start, weekRange.end);
+    } catch (error) {
+      ownedError = String((error && error.message) || error);
+    }
+
+    if (ownedEvents) {
+      report.ok = true;
+      report.eventTotal = ownedEvents.length;
+      report.eventInWeek = ownedEvents.length;
+      weekEventCount += ownedEvents.length;
+      report.message = ownedEvents.length
+        ? '本週 ' + ownedEvents.length + ' 筆（已從 Google 日曆讀取）'
+        : '這個日曆本週沒有活動，前台會先顯示 Sheet 備援。請在「大南國小」日曆新增本週行程。';
+      feedReports.push(report);
+      return;
+    }
+
+    if (!icsUrl && !calendarId) {
+      report.message = '網址無法辨識（請用 embed?src=… 或 …/basic.ics）';
       feedReports.push(report);
       return;
     }
 
     try {
-      const response = UrlFetchApp.fetch(icsUrl, {
+      const response = icsUrl ? UrlFetchApp.fetch(icsUrl, {
         muteHttpExceptions: true,
         followRedirects: true,
         headers: { 'User-Agent': 'DanaEduCalendar/1.0' }
-      });
+      }) : null;
+      if (!response) {
+        report.message = permissionHint_(ownedError) || '讀不到這個日曆';
+        feedReports.push(report);
+        return;
+      }
       report.httpStatus = response.getResponseCode();
       if (report.httpStatus >= 400) {
-        report.message = 'HTTP ' + report.httpStatus + '（請確認日曆已公開）';
+        report.message = permissionHint_(ownedError) || ('HTTP ' + report.httpStatus + '（請確認日曆已公開）');
         feedReports.push(report);
         return;
       }
@@ -379,7 +405,7 @@ function probeCalendarSync_() {
       weekEventCount += report.eventInWeek;
 
       if (!report.eventTotal) {
-        report.message = '公開 ICS 無任何行程（請在日曆新增活動，並開啟「公開此日曆的詳細資料」）';
+        report.message = '公開日曆目前 0 筆行程。請在 Google 日曆「大南國小」新增活動；若活動是私人的，請先完成日曆授權。';
       } else if (!report.eventInWeek) {
         report.message = '日曆有 ' + report.eventTotal + ' 筆，但本週（' + weekRange.rangeLabel + '）沒有';
       } else {
@@ -387,9 +413,7 @@ function probeCalendarSync_() {
       }
     } catch (error) {
       const detail = String((error && error.message) || error);
-      report.message = /external_request|權限不足/.test(detail)
-        ? '尚未授權外部連線。請重新開啟後台，並允許連到 Google 日曆。'
-        : detail;
+      report.message = permissionHint_(ownedError || detail) || detail;
     }
 
     feedReports.push(report);
@@ -492,6 +516,17 @@ function normalizeSettings_(payload) {
 
 function isSettingsKey_(key) {
   return SETTINGS_FIELDS.some(field => field.key === key);
+}
+
+function permissionHint_(detail) {
+  const text = String(detail || '');
+  if (/calendar/.test(text) && /權限不足|permission/i.test(text)) {
+    return '尚未授權讀取 Google 日曆。請到指令碼編輯器按執行，並允許日曆權限。';
+  }
+  if (/external_request|權限不足/.test(text)) {
+    return '尚未授權外部連線。請到指令碼編輯器按執行，並允許連到外部服務。';
+  }
+  return '';
 }
 
 /** 橫幅背景：只接受 https 圖片網址；Drive 檔案連結轉成可嵌入的縮圖網址。無法辨識則存空字串。 */
@@ -829,6 +864,64 @@ function shortWeekdayLabel_(isoDate) {
   return match[2] + '/' + match[3] + '（' + weekday + '）';
 }
 
+/** embed 或 iCal 網址 → Google 日曆 ID（xxx@group.calendar.google.com） */
+function calendarIdFromUrl_(url) {
+  const raw = String(url || '').trim();
+  if (!raw) return '';
+
+  const ics = raw.match(/\/calendar\/ical\/([^/]+)\/public\/basic\.ics/i);
+  if (ics) {
+    try { return decodeURIComponent(ics[1]); } catch (error) { return ics[1]; }
+  }
+
+  const src = raw.match(/[?&]src=([^&]+)/i);
+  if (src) {
+    try { return decodeURIComponent(src[1].replace(/\+/g, ' ')); } catch (error) { return src[1]; }
+  }
+  return '';
+}
+
+/** 以發布者帳號讀取日曆（含未公開行程）。讀不到回 null，空日曆回 []。 */
+function eventsFromCalendarApp_(calendarId, startIso, endIso) {
+  if (!calendarId) return null;
+  const calendar = CalendarApp.getCalendarById(calendarId);
+  if (!calendar) return null;
+
+  const startParts = String(startIso).split('-');
+  const endParts = String(endIso).split('-');
+  const start = new Date(Number(startParts[0]), Number(startParts[1]) - 1, Number(startParts[2]));
+  const end = new Date(Number(endParts[0]), Number(endParts[1]) - 1, Number(endParts[2]) + 1);
+
+  return calendar.getEvents(start, end).map(function (ev) {
+    const startTime = ev.getStartTime();
+    const date = Utilities.formatDate(startTime, CONFIG.TIMEZONE, 'yyyy-MM-dd');
+    const timeLabel = ev.isAllDayEvent()
+      ? ''
+      : Utilities.formatDate(startTime, CONFIG.TIMEZONE, 'HH:mm');
+    return {
+      uid: String(ev.getId() || ''),
+      summary: String(ev.getTitle() || ''),
+      date: date,
+      timeLabel: timeLabel,
+      startKey: Utilities.formatDate(startTime, CONFIG.TIMEZONE, "yyyy-MM-dd'T'HH:mm:ss"),
+      href: ''
+    };
+  });
+}
+
+/** 公開 iCal 裡落在當週的行程；失敗回 null */
+function eventsFromPublicIcs_(icsUrl, startIso, endIso) {
+  if (!icsUrl) return null;
+  const response = UrlFetchApp.fetch(icsUrl, {
+    muteHttpExceptions: true,
+    followRedirects: true,
+    headers: { 'User-Agent': 'DanaEduCalendar/1.0' }
+  });
+  if (response.getResponseCode() >= 400) return null;
+  return parseIcsEvents_(response.getContentText())
+    .filter(function (ev) { return ev.date >= startIso && ev.date <= endIso; });
+}
+
 /** 合併所有已啟用日曆中「當週日–六」的行程 → 前台 courses */
 function loadWeekCoursesFromCalendars_(weekRange) {
   const start = String((weekRange && weekRange.start) || '');
@@ -841,21 +934,21 @@ function loadWeekCoursesFromCalendars_(weekRange) {
 
   const events = [];
   feeds.forEach(feed => {
-    const icsUrl = toCalendarIcsUrl_(feed.url);
-    if (!icsUrl) return;
+    const calendarId = calendarIdFromUrl_(feed.url);
+    let found = null;
     try {
-      const response = UrlFetchApp.fetch(icsUrl, {
-        muteHttpExceptions: true,
-        followRedirects: true,
-        headers: { 'User-Agent': 'DanaEduCalendar/1.0' }
-      });
-      if (response.getResponseCode() >= 400) return;
-      parseIcsEvents_(response.getContentText())
-        .filter(ev => ev.date >= start && ev.date <= end)
-        .forEach(ev => events.push(ev));
+      found = eventsFromCalendarApp_(calendarId, start, end);
     } catch (error) {
-      /* 單一來源失敗不影響其他日曆／Sheet 備援 */
+      found = null;
     }
+    if (!found) {
+      try {
+        found = eventsFromPublicIcs_(toCalendarIcsUrl_(feed.url), start, end);
+      } catch (error) {
+        found = null;
+      }
+    }
+    (found || []).forEach(function (ev) { events.push(ev); });
   });
 
   events.sort((a, b) => String(a.startKey || '').localeCompare(String(b.startKey || '')));
