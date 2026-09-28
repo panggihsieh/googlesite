@@ -832,17 +832,26 @@ function calendarSyncBannerHtml(){
     return '<div class="notice warn">尚未取得日曆同步狀態，請按「重新檢查同步」。</div>';
   }
   const usingCalendar = sync.frontendSource === 'calendar';
+  const needsAuth = !!sync.authUrl || (sync.feeds || []).some(f => /尚未授權/.test(String(f.message || '')));
   const cls = usingCalendar ? 'ok' : 'warn';
   const headline = usingCalendar
     ? '前台本週課程來源：Google 日曆（本週 ' + sync.weekEventCount + ' 筆，' + (sync.weekRangeLabel || '') + '）'
-    : '前台本週課程來源：Sheet 備援（公開 ICS 本週 0 筆，區間 ' + (sync.weekRangeLabel || '') + '）';
+    : (needsAuth
+      ? '前台仍用 Sheet 備援：Google 日曆尚未授權（' + (sync.weekRangeLabel || '') + '）'
+      : '前台本週課程來源：Sheet 備援（公開日曆本週 0 筆，區間 ' + (sync.weekRangeLabel || '') + '）');
   const items = (sync.feeds || []).map(f=>{
     const name = f.label || f.id || '日曆';
     const flag = f.visible ? '' : '［未啟用］';
     return '<li>' + escapeHtml(flag + name + '：' + (f.message || '')) + '</li>';
   }).join('');
+  const authLink = sync.authUrl
+    ? '<p style="margin:10px 0 0"><a class="btn btn-primary" href="' + escapeAttr(sync.authUrl) + '" target="_top">授權 Google 日曆</a></p>'
+    : (needsAuth
+      ? '<p style="margin:10px 0 0"><a class="btn btn-primary" href="https://script.google.com/d/1tggx6LV9vdC3H7fHqJGE5b5Pgbakm14LoMD_2kyTAwvvoIma0d8LO3aB/edit" target="_top">開啟編輯器並授權</a></p>'
+      : '');
   return '<div class="notice ' + cls + '">' + escapeHtml(headline) +
     (items ? '<ul>' + items + '</ul>' : '') +
+    authLink +
     '</div>';
 }
 

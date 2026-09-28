@@ -425,8 +425,22 @@ function probeCalendarSync_() {
     weekRangeLabel: weekRange.rangeLabel,
     weekEventCount: weekEventCount,
     frontendSource: weekEventCount > 0 ? 'calendar' : 'sheet',
+    authUrl: calendarAuthUrl_(),
     feeds: feedReports
   };
+}
+
+/** 新權限尚未同意時，回傳 Google 授權網址；已授權則空字串。 */
+function calendarAuthUrl_() {
+  try {
+    const info = ScriptApp.getAuthorizationInfo(ScriptApp.AuthMode.FULL);
+    if (info.getAuthorizationStatus() === ScriptApp.AuthorizationStatus.REQUIRED) {
+      return info.getAuthorizationUrl() || '';
+    }
+  } catch (error) {
+    return '';
+  }
+  return '';
 }
 
 /* ---------- 後台設定（工作表 settings） ---------- */
